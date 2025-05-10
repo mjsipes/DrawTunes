@@ -1,11 +1,8 @@
-import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import TabsDemo from "@/components/tabsdemo.tsx";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <div className="flex flex-col items-center justify-center p-4 max-w-md mx-auto">
       <div className="flex justify-center mb-8">
