@@ -12,12 +12,61 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useSupabaseUploadCanvas } from "@/hooks/use-supabase-upload-canvas";
 
 export default function DrawCard() {
   const canvasRef = useRef<ReactSketchCanvasRef>(null);
   const [strokeColor, setStrokeColor] = useState("#6C90FF");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { isUploading, error, uploadedPath, uploadCanvasImage, getPublicUrl } =
+    useSupabaseUploadCanvas({
+      bucketName: "drawings",
+      path: "drawings",
+    });
+
   const handleStrokeColorChange = (event: ChangeEvent<HTMLInputElement>) => {
     setStrokeColor(event.target.value);
+  };
+  const handleGetRecommendations = async () => {
+    if (!canvasRef.current) return;
+
+    setIsLoading(true);
+    try {
+      // 1. Export canvas as a PNG data URL
+      const dataUrl = await canvasRef.current.exportImage("png");
+
+      // 2. Convert data URL to a Blob
+      const fetchResponse = await fetch(dataUrl);
+      const blob = await fetchResponse.blob();
+
+      // 3. Generate a unique filename
+      const fileName = `drawing-${Date.now()}.png`;
+
+      // 4. Upload the blob to Supabase
+      const filePath = await uploadCanvasImage(blob, fileName);
+
+      // 5. If upload successful, you can proceed with calling your recommendation API
+      if (filePath) {
+        // Get the public URL
+        const publicUrl = getPublicUrl(filePath);
+
+        // TODO: Call your music recommendation API with the publicUrl
+        console.log("File uploaded successfully:", publicUrl);
+
+        // You would call your API here
+        // const response = await fetch('/api/recommendations', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ imageUrl: publicUrl }),
+        // });
+        // const recommendations = await response.json();
+      }
+    } catch (err) {
+      console.error("Error uploading drawing:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,7 +125,15 @@ export default function DrawCard() {
                 />
               </div>
             </div>
-            <Button variant="outline">Get Music Recommendations</Button>
+            <Button
+              variant="outline"
+              onClick={handleGetRecommendations}
+              disabled={isLoading}
+            >
+              {isLoading || isUploading
+                ? "Uploading..."
+                : "Get Music Recommendations"}
+            </Button>
           </div>
         </CardContent>
         {/* <CardFooter className="flex justify-center"></CardFooter> */}
