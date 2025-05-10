@@ -9,11 +9,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dropzone,
+  DropzoneContent,
+  DropzoneEmptyState,
+} from "@/components/dropzone";
+import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
 
 export default function UploadCard() {
+  const props = useSupabaseUpload({
+    bucketName: "test",
+    path: "test",
+    allowedMimeTypes: ["image/*"],
+    maxFiles: 2,
+    maxFileSize: 1000 * 1000 * 10, // 10MB,
+  });
   return (
     <>
-      hi
       <Card>
         <CardHeader>
           <CardTitle>upload</CardTitle>
@@ -23,17 +35,13 @@ export default function UploadCard() {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="space-y-1">
-            <Label htmlFor="current">Current upload</Label>
-            <Input id="current" type="upload" />
-          </div>
-          <div className="space-y-1">
             <Label htmlFor="new">New upload</Label>
             <Input id="new" type="upload" />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="new">New upload</Label>
-            <Input id="new" type="upload" />
-          </div>
+          <Dropzone {...props}>
+            <DropzoneEmptyState />
+            <DropzoneContent />
+          </Dropzone>
         </CardContent>
         <CardFooter>
           <Button>Save upload</Button>
