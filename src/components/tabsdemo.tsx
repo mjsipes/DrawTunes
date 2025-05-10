@@ -4,10 +4,10 @@ import UploadCard from "./uploadcard";
 
 export default function TabsDemo() {
   return (
-    <Tabs defaultValue="draw" className="w-[400px]">
+    <Tabs defaultValue="draw" className="w-[500px]">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="draw">draw</TabsTrigger>
-        <TabsTrigger value="upload">upload</TabsTrigger>
+        <TabsTrigger value="draw">Draw</TabsTrigger>
+        <TabsTrigger value="upload">Upload</TabsTrigger>
       </TabsList>
       <TabsContent value="draw">
         <DrawCard />

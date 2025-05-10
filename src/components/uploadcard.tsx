@@ -21,31 +21,25 @@ export default function UploadCard() {
     bucketName: "test",
     path: "test",
     allowedMimeTypes: ["image/*"],
-    maxFiles: 2,
+    maxFiles: 1,
     maxFileSize: 1000 * 1000 * 10, // 10MB,
   });
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>upload</CardTitle>
+          <CardTitle>Upload for Music</CardTitle>
           <CardDescription>
-            Change your upload here. After saving, you'll be logged out.
+            Upload something and we'll recommend Spotify tracks that match your
+            art.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="space-y-1">
-            <Label htmlFor="new">New upload</Label>
-            <Input id="new" type="upload" />
-          </div>
           <Dropzone {...props}>
             <DropzoneEmptyState />
             <DropzoneContent />
           </Dropzone>
         </CardContent>
-        <CardFooter>
-          <Button>Save upload</Button>
-        </CardFooter>
       </Card>
     </>
   );
