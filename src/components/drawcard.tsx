@@ -12,26 +12,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSupabaseUploadCanvas } from "@/hooks/use-supabase-upload-canvas";
+import { createClient } from "@/lib/supabase/client";
 
 export default function DrawCard() {
+  const supabase = createClient();
   const canvasRef = useRef<ReactSketchCanvasRef>(null);
   const [strokeColor, setStrokeColor] = useState("#6C90FF");
   const [isLoading, setIsLoading] = useState(false);
-
-  const { isUploading, error, uploadedPath, uploadCanvasImage, getPublicUrl } =
-    useSupabaseUploadCanvas({
-      bucketName: "drawings",
-      path: "drawings",
-    });
+  const [error, setError] = useState<string | null>(null);
 
   const handleStrokeColorChange = (event: ChangeEvent<HTMLInputElement>) => {
     setStrokeColor(event.target.value);
   };
+
   const handleGetRecommendations = async () => {
     if (!canvasRef.current) return;
 
     setIsLoading(true);
+    setError(null);
+
     try {
       // 1. Export canvas as a PNG data URL
       const dataUrl = await canvasRef.current.exportImage("png");
@@ -42,28 +41,36 @@ export default function DrawCard() {
 
       // 3. Generate a unique filename
       const fileName = `drawing-${Date.now()}.png`;
+      const filePath = `drawings/${fileName}`;
 
       // 4. Upload the blob to Supabase
-      const filePath = await uploadCanvasImage(blob, fileName);
+      const { data, error: uploadError } = await supabase.storage
+        .from("drawings")
+        .upload(filePath, blob, {
+          contentType: "image/png",
+          upsert: false,
+        });
 
-      // 5. If upload successful, you can proceed with calling your recommendation API
-      if (filePath) {
-        // Get the public URL
-        const publicUrl = getPublicUrl(filePath);
+      if (uploadError) throw uploadError;
 
-        // TODO: Call your music recommendation API with the publicUrl
-        console.log("File uploaded successfully:", publicUrl);
+      // 5. Get public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from("drawings")
+        .getPublicUrl(data?.path || "");
 
-        // You would call your API here
-        // const response = await fetch('/api/recommendations', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify({ imageUrl: publicUrl }),
-        // });
-        // const recommendations = await response.json();
-      }
-    } catch (err) {
+      // 6. Call your recommendation API with the URL
+      console.log("File uploaded successfully:", publicUrlData?.publicUrl);
+
+      // TODO: Call your API here
+      // const response = await fetch('/api/recommendations', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ imageUrl: publicUrlData?.publicUrl }),
+      // });
+      // const recommendations = await response.json();
+    } catch (err: any) {
       console.error("Error uploading drawing:", err);
+      setError(err.message || "Failed to upload image");
     } finally {
       setIsLoading(false);
     }
@@ -130,13 +137,14 @@ export default function DrawCard() {
               onClick={handleGetRecommendations}
               disabled={isLoading}
             >
-              {isLoading || isUploading
-                ? "Uploading..."
-                : "Get Music Recommendations"}
+              {isLoading ? "Uploading..." : "Get Music Recommendations"}
             </Button>
           </div>
+
+          {error && (
+            <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+          )}
         </CardContent>
-        {/* <CardFooter className="flex justify-center"></CardFooter> */}
       </Card>
     </>
   );
