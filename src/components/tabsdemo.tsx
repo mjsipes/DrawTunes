@@ -58,6 +58,10 @@ export default function TabsDemo() {
               <Label htmlFor="new">New upload</Label>
               <Input id="new" type="upload" />
             </div>
+            <div className="space-y-1">
+              <Label htmlFor="new">New upload</Label>
+              <Input id="new" type="upload" />
+            </div>
           </CardContent>
           <CardFooter>
             <Button>Save upload</Button>
