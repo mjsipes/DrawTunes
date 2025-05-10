@@ -7,8 +7,8 @@ function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <>
-      <div className="flex">
+    <div className="flex flex-col items-center justify-center p-4 max-w-md mx-auto">
+      <div className="flex justify-center mb-8">
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
@@ -16,8 +16,10 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <TabsDemo />
-    </>
+      <div className="w-full">
+        <TabsDemo />
+      </div>
+    </div>
   );
 }
 
