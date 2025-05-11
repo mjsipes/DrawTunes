@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
       {
         global: {
           headers: {
-            Authorization: req.headers.get("Authorization"),
+            Authorization: req.headers.get("Authorization") ?? "",
           },
         },
       },

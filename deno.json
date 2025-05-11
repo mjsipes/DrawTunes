@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@openai/openai": "jsr:@openai/openai@^4.98.0"
+  }
+}
