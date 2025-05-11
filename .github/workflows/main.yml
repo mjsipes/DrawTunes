@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SUPABASE_ACCESS_TOKEN: YOUR_SUPABASE_ACCESS_TOKEN
+      SUPABASE_ACCESS_TOKEN: ${{YOUR_SUPABASE_ACCESS_TOKEN}}
       PROJECT_ID: efaxdvjankrzmrmhbpxr
 
     steps:
