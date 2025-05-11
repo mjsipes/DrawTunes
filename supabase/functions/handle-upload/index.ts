@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
             {
               type: "input_text",
               text:
-                "You are a song recomender. I will give you an image. I want you to think about the image and then come up with three songs with similar vibe. give me a couple sentance explanation of why you pick teh songs.",
+                `generate music suggestions based on this image: Describe the mood, setting, and cultural context, and suggest music styles, artists, or songs from various languages that would enhance the scene. Consider genres and artists from popular global music scenes, including American, Latin, European, Asian, and African influences, with options in languages like English, Spanish, French, Hindi, Korean, Arabic, and more. Base your suggestions on the image's emotional tone, colors, and visual themes, aligning music choices with the ambiance and cultural diversity reflected. Make sure to include both mainstream popular songs, as well as more obscure songs from underground/cultural audiences. try to prioritize more popular songs. List 10 songs in JSON format, with a key "songs" which contains an array, each array element matches the format of a key "artist" which contains the artists name, and the key "title" which contains the songs title. Do not add any other text to your response, only the JSON format specified. If you would like, you can place exactly why you picked these songs in a new value on the JSON object titled "reasoning", but the overall structure of your response should be purely JSON.`,
             },
             {
               type: "input_image",
@@ -66,14 +66,46 @@ Deno.serve(async (req) => {
         },
       ],
     });
-    console.log(response.output_text);
+    // console.log("response: ", response.output_text);
+    // const responseData = JSON.parse(response.output_text);
+    // console.log("responseData:", responseData);
+    // const reasoning = responseData.reasoning;
+    // const firstSongArtist = responseData.songs[0].artist;
+    // const firstSongTitle = responseData.songs[0].title;
+
+    // console.log("Reasoning:", reasoning);
+    // console.log("First Song Artist:", firstSongArtist);
+    // console.log("First Song Title:", firstSongTitle);
+    console.log("response: ", response.output_text);
+
+    // Remove markdown code block syntax if present
+    let cleanedResponse = response.output_text.trim();
+    if (cleanedResponse.startsWith("```json")) {
+      // Remove opening ```json and closing ```
+      cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(
+        /\s*```$/,
+        "",
+      );
+    }
+
+    // Now parse the cleaned JSON
+    const responseData = JSON.parse(cleanedResponse);
+    console.log("responseData:", responseData);
+
+    // Extract the reasoning and first song
+    const reasoning = responseData.reasoning;
+    const firstSongArtist = responseData.songs[0].artist;
+    const firstSongTitle = responseData.songs[0].title;
+
+    console.log("Reasoning:", reasoning.substring(0, 50) + "..."); // Show first 50 chars
+    console.log("First Song:", firstSongArtist, "-", firstSongTitle);
 
     //========================= SPOTIFY LOOKUP ==========================//
     // Query Spotify API for song details (hardcoded example)
     const { data, error } = await supabase.functions.invoke("spotify", {
       body: {
-        "title": "Bohemian Rhapsody",
-        "artist": "Queen",
+        "title": firstSongTitle,
+        "artist": firstSongArtist,
       },
     });
     console.log("spotify data:", data);
