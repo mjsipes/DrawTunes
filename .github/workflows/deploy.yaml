@@ -1,26 +1,32 @@
-
 name: Deploy Function
-
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      PROJECT_ID: efaxdvjankrzmrmhbpxr
-
+      PROJECT_ID: your-project-id
     steps:
       - uses: actions/checkout@v4
-
+      
+      # Debug step to check token format
+      - name: Debug token format
+        run: |
+          # Show the first few characters (safe to display)
+          echo "Token prefix: ${SUPABASE_ACCESS_TOKEN:0:6}XXX"
+          echo "Token length: ${#SUPABASE_ACCESS_TOKEN}"
+          # Check if it starts with sbp_
+          if [[ "${SUPABASE_ACCESS_TOKEN:0:4}" != "sbp_" ]]; then
+            echo "ERROR: Token does not start with sbp_"
+          else
+            echo "Token format looks correct (starts with sbp_)"
+          fi
+      
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-
-      - run: supabase functions deploy --project-ref $PROJECT_ID
-      
+      - run: supabase functions deploy --project-ref $PROJECT_ID --debug
