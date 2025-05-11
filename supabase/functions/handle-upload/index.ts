@@ -25,14 +25,7 @@ Deno.serve(async (req) => {
     console.log("record:", record);
     console.log("bucket_id:", bucket_id);
     console.log("namee:", name);
-    //get the file from supabase storage
-    // const { data, error } = await supabaseClient.storage
-    //   .from(bucket_id)
-    //   .getPublicUrl(name);
-    // if (error) throw error;
-    // console.log("data:", data);
-    // const public_url = data.publicUrl;
-    // console.log("public_url:", public_url);
+
     //construct url manually
     const public_url = IMAGE_URL + bucket_id + "/" + name;
     console.log("public_url:", public_url);
@@ -64,6 +57,15 @@ Deno.serve(async (req) => {
     });
     console.log(response.output_text);
     //exp
+    //query spotify:
+    const { data, error } = await supabaseClient.functions.invoke("spotify", {
+      body: {
+        "title": "Bohemian Rhapsody",
+        "artist": "Queen",
+      },
+    });
+    console.log("spotify data:", data);
+    console.log("spotify error:", error);
 
     const reply = "hi";
     return new Response(reply, {
