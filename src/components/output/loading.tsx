@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <Card className="w-[450px] h-[360px]">
+    <Card className="h-full">
       <CardContent>
         <div className="space-y-2">
           <Skeleton className="h-4 w-[350px]" />

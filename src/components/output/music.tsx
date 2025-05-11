@@ -4,5 +4,11 @@ import { useState } from "react";
 export default function Music() {
   const [loading, setLoading] = useState(true);
 
-  return <>{loading ? <Loading /> : <Spotify />}</>;
+  return (
+    <>
+      <div className="w-[450px] h-[360px]">
+        {loading ? <Loading /> : <Spotify />}
+      </div>
+    </>
+  );
 }
