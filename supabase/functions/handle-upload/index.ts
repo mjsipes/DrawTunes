@@ -6,7 +6,7 @@ const IMAGE_URL =
 Deno.serve(async (req) => {
   try {
     //=========================== INITIALIZATION ===========================//
-    // Initialize Supabase client with authentication
+    // Initialize Supabase client with authenticationnn
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
