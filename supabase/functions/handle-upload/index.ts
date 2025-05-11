@@ -64,17 +64,8 @@ Deno.serve(async (req) => {
     });
     console.log(response.output_text);
     //exp
-    const chatCompletion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: "wassup fam",
-        },
-      ],
-      model: "gpt-3.5-turbo",
-      stream: false,
-    });
-    const reply = chatCompletion.choices[0].message.content;
+
+    const reply = "hi";
     return new Response(reply, {
       headers: {
         "Content-Type": "text/plain",
