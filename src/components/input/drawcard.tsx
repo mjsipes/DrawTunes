@@ -57,16 +57,7 @@ export default function DrawCard() {
         .from("drawings")
         .getPublicUrl(data?.path || "");
 
-      // 6. Call your recommendation API with the URL
       console.log("File uploaded successfully:", publicUrlData?.publicUrl);
-
-      // TODO: Call your API here
-      // const response = await fetch('/api/recommendations', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ imageUrl: publicUrlData?.publicUrl }),
-      // });
-      // const recommendations = await response.json();
     } catch (err: any) {
       console.error("Error uploading drawing:", err);
       setError(err.message || "Failed to upload image");
