@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
 
     // Search for tracks
     const searchResponse = await fetch(
-      `https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`,
+      `https://api.spotify.com/v1/search?q=${query}&type=track&limit=2`,
       {
         headers: {
           "Authorization": `Bearer ${token}`,
