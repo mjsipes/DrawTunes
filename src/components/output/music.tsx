@@ -20,8 +20,10 @@ import {
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
   type Recommendation = Database["public"]["Tables"]["recommendations"]["Row"];
-  const [songs, setSongs] = useState<Recommendation[]>([]);
-  const { user } = useAuth();
+  const [songs, setSongs] = useState<
+    Database["public"]["Tables"]["recommendations"]["Row"][]
+  >([]);
+  const user = useAuth();
 
   const supabase = createClient();
 
