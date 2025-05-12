@@ -99,11 +99,14 @@ export default function MusicRecommendations() {
                   <TableRow key={song.id}>
                     <TableCell className="p-2">
                       <div className="flex justify-center items-center">
-                        {song.full_track_data?.album?.images?.[0]?.url ? (
+                        {(song.full_track_data as any)?.album?.images?.[0]
+                          ?.url ? (
                           <img
-                            src={song.full_track_data.album.images[0].url}
+                            src={
+                              (song.full_track_data as any)?.album.images[0].url
+                            }
                             alt={`${
-                              song.full_track_data?.album?.name || ""
+                              (song.full_track_data as any)?.album?.name || ""
                             } cover`}
                             className="w-8 h-8 rounded-md object-cover shadow-sm"
                           />
@@ -122,9 +125,12 @@ export default function MusicRecommendations() {
                       {song.full_track_data?.album?.name || "-"}
                     </TableCell> */}
                     <TableCell className="text-right">
-                      {song.full_track_data?.external_urls?.spotify && (
+                      {(song.full_track_data as any)?.external_urls
+                        ?.spotify && (
                         <a
-                          href={song.full_track_data.external_urls.spotify}
+                          href={
+                            (song.full_track_data as any)?.external_urls.spotify
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-blue-500 hover:underline"
