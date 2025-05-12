@@ -2,14 +2,9 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import TabsDemo from "@/components/input/tabsdemo";
 import Music from "@/components/output/music";
-import { createClient } from "@/lib/supabase/client";
-import { useEffect } from "react";
-import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { AuthProvider } from "@/lib/supabase/auth/AuthProvider";
 
 function App() {
-  const supabase = createClient();
-  console.log("supabase", supabase);
-
   return (
     <AuthProvider>
       <div className="container mx-auto p-4">

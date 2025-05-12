@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ExternalLink, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Database } from "@/lib/database.types";
+import type { Database } from "@/lib/supabase/database.types";
 
 import {
   Table,
