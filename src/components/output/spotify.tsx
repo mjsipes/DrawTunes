@@ -1,6 +1,5 @@
 export default function Spotify() {
   // const [playlistId, setPlaylistId] = useState("6Ceh7dashSY2Z9gl5N3Fvy");
-  const playlistId = "6Ceh7dashSY2Z9gl5N3Fvy";
   return (
     <div className="border rounded-xl shadow-sm">
       <iframe
