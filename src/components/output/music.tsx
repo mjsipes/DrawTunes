@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ExternalLink, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import Loading from "@/components/output/loading";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   Table,
@@ -16,22 +19,22 @@ import {
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
   const [songs, setSongs] = useState([]);
+  const { user } = useAuth();
+
   const supabase = createClient();
 
+  // Fetch existing recommendations on load
+  const fetchRecommendations = async () => {
+    const { data, error } = await supabase.from("recommendations").select("*");
+
+    if (data) {
+      setSongs(data);
+    }
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    // Fetch existing recommendations on load
-    const fetchRecommendations = async () => {
-      const { data, error } = await supabase
-        .from("recommendations")
-        .select("*");
-
-      if (data) {
-        setSongs(data);
-      }
-
-      setLoading(false);
-    };
-
     fetchRecommendations();
 
     // Subscribe to new inserts
@@ -43,10 +46,10 @@ export default function MusicRecommendations() {
           event: "INSERT",
           schema: "public",
           table: "recommendations",
+          filter: `drawing_id=in.(select id from storage.objects where owner='${user?.id}')`,
         },
         (payload) => {
-          console.log("New song received!", payload);
-          setSongs((prevSongs) => [...prevSongs, payload.new]);
+          fetchRecommendations();
         }
       )
       .subscribe();
@@ -54,12 +57,12 @@ export default function MusicRecommendations() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [supabase, user?.id]);
 
   if (loading) {
     return (
-      <div className="flex justify-center p-8">
-        Loading music recommendations...
+      <div className="w-[450px] h-[360px]">
+        <Loading />
       </div>
     );
   }
@@ -67,63 +70,73 @@ export default function MusicRecommendations() {
   return (
     <div className="w-[450px] h-[360px]">
       <Card>
-        <Table>
-          <TableCaption>Your Music Recommendations</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[60px]"></TableHead>
-              <TableHead className="w-[300px]">Track</TableHead>
-              <TableHead>Artist</TableHead>
-              <TableHead>Album</TableHead>
-              <TableHead className="text-right">Play</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {songs.length === 0 ? (
+        <ScrollArea className="h-[360px]">
+          <Table className="border-collapse">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
-                  No music recommendations yet
-                </TableCell>
+                <TableHead className="w-[80px] text-center">Cover</TableHead>
+                <TableHead className="w-[180px]">Track</TableHead>
+                <TableHead>Artist</TableHead>
+                {/* <TableHead>Album</TableHead> */}
+                <TableHead className="text-right">Play</TableHead>
               </TableRow>
-            ) : (
-              songs.map((song) => (
-                <TableRow key={song.id}>
-                  <TableCell>
-                    {song.album_cover_url ? (
-                      <img
-                        src={song.album_cover_url}
-                        alt={`${song.album_name} cover`}
-                        className="w-12 h-12 rounded-md object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-slate-200 rounded-md flex items-center justify-center">
-                        <Music size={20} className="text-slate-400" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {song.track_name}
-                  </TableCell>
-                  <TableCell>{song.artist_name}</TableCell>
-                  <TableCell>{song.album_name || "-"}</TableCell>
-                  <TableCell className="text-right">
-                    {song.preview_url && (
-                      <a
-                        href={song.preview_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-blue-500 hover:underline"
-                      >
-                        <span>Listen</span>
-                        <ExternalLink size={16} />
-                      </a>
-                    )}
+            </TableHeader>
+            <TableBody>
+              {songs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    <div className="flex flex-col items-center gap-2">
+                      <Music size={32} className="text-slate-400" />
+                      <span>No music recommendations yet</span>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                songs.map((song) => (
+                  <TableRow key={song.id}>
+                    <TableCell className="p-2">
+                      <div className="flex justify-center items-center">
+                        {song.full_track_data?.album?.images?.[0]?.url ? (
+                          <img
+                            src={song.full_track_data.album.images[0].url}
+                            alt={`${
+                              song.full_track_data?.album?.name || ""
+                            } cover`}
+                            className="w-8 h-8 rounded-md object-cover shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-slate-200 rounded-md flex items-center justify-center">
+                            <Music size={20} className="text-slate-400" />
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {song.track_name}
+                    </TableCell>
+                    <TableCell>{song.artist_name}</TableCell>
+                    {/* <TableCell>
+                      {song.full_track_data?.album?.name || "-"}
+                    </TableCell> */}
+                    <TableCell className="text-right">
+                      {song.full_track_data?.external_urls?.spotify && (
+                        <a
+                          href={song.full_track_data.external_urls.spotify}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-blue-500 hover:underline"
+                        >
+                          <span>Listen</span>
+                          <ExternalLink size={16} />
+                        </a>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
       </Card>
     </div>
   );
