@@ -120,16 +120,21 @@ Deno.serve(async (req) => {
 
     //========================= SPOTIFY LOOKUP ==========================//
     // Query Spotify API for song details (hardcoded example)
-    // const { data, error } = await supabase.functions.invoke("spotify", {
-    //   body: {
-    //     "title": firstSongTitle,
-    //     "artist": firstSongArtist,
-    //   },
-    // });
-    // console.log("spotify data:", data);
-    // console.log("spotify error:", error);
-
-    const token = await getSpotifyToken();
+    const spotify_token_response = await fetch(
+      "https://accounts.spotify.com/api/token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": `Basic ${btoa(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+        },
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
+        }),
+      },
+    );
+    const data = await spotify_token_response.json();
+    const token = data.access_token;
     const query = encodeURIComponent(
       `track:${firstSongTitle} artist:${firstSongArtist}`,
     );
