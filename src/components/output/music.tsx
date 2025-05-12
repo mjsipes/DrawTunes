@@ -27,7 +27,10 @@ export default function MusicRecommendations() {
 
   // Fetch existing recommendations on load
   const fetchRecommendations = async () => {
-    const { data, error } = await supabase.from("recommendations").select("*");
+    const { data, error } = await supabase
+      .from("recommendations")
+      .select("*")
+      .eq("owner_id", user?.id);
 
     if (data) {
       setSongs(data);
