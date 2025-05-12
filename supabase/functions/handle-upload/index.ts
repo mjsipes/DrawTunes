@@ -112,30 +112,27 @@ Deno.serve(async (req) => {
     console.log("spotify error:", error);
 
     // Extract track information
-    const track1name = data.tracks.items[0].name;
-    const track1artist = data.tracks.items[0].artists[0].name;
-    const track1url = data.tracks.items[0].external_urls.spotify;
-    console.log("track1name:", track1name);
-    console.log("track1artist:", track1artist);
-    console.log("track1url:", track1url);
+    const track1Data = data.tracks.items[0];
+    console.log("track1Data:", track1Data);
 
     //====================== DATABASE STORAGE =======================//
     // TODO: Store data in database
     {
-      console.log("inserting data into recommendations table");
-      const { data, error } = await supabase
+      console.log("inserting complete track data into recommendations table");
+      const { data: insertData, error: insertError } = await supabase
         .from("recommendations")
         .insert([
           {
-            track_name: track1name,
+            track_name: track1Data.name,
             drawing_id: drawing_id,
-            artist_name: track1artist,
-            preview_url: track1url,
+            artist_name: track1Data.artists[0].name,
+            preview_url: track1Data.external_urls.spotify,
+            full_track_data: track1Data, // Store the complete track object as JSON
           },
         ])
         .select();
-      console.log("insertdata:", data);
-      console.log("inserterror:", error);
+      console.log("insertdata:", insertData);
+      console.log("inserterror:", insertError);
     }
 
     //---------------------- RETURN RESPONSE ------------------------//
