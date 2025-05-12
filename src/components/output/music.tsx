@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { Database } from "@/types/supabase";
 
 import {
   Table,
@@ -18,7 +19,8 @@ import {
 
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
-  const [songs, setSongs] = useState([]);
+  type Recommendation = Database["public"]["Tables"]["recommendations"]["Row"];
+  const [songs, setSongs] = useState<Recommendation[]>([]);
   const { user } = useAuth();
 
   const supabase = createClient();
@@ -36,8 +38,6 @@ export default function MusicRecommendations() {
 
   useEffect(() => {
     fetchRecommendations();
-
-    // Subscribe to new inserts
     const channel = supabase
       .channel("recommendations-channel")
       .on(
@@ -46,9 +46,10 @@ export default function MusicRecommendations() {
           event: "INSERT",
           schema: "public",
           table: "recommendations",
-          filter: `drawing_id=in.(select id from storage.objects where owner='${user?.id}')`,
+          // filter: `drawing_id=in.(select id from storage.objects where owner='${user?.id}')`,
         },
         (payload) => {
+          console.log("New recommendation received!", payload);
           fetchRecommendations();
         }
       )
