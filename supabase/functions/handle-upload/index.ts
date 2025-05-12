@@ -125,6 +125,7 @@ Deno.serve(async (req) => {
           {
             track_name: track1Data.name,
             drawing_id: drawing_id,
+            owner_id: owner_id,
             artist_name: track1Data.artists[0].name,
             preview_url: track1Data.external_urls.spotify,
             full_track_data: track1Data, // Store the complete track object as JSON
