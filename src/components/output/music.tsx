@@ -10,7 +10,6 @@ import type { Database } from "@/lib/supabase/database.types";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -19,7 +18,6 @@ import {
 
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
-  type Recommendation = Database["public"]["Tables"]["recommendations"]["Row"];
   const [songs, setSongs] = useState<
     Database["public"]["Tables"]["recommendations"]["Row"][]
   >([]);
@@ -33,6 +31,9 @@ export default function MusicRecommendations() {
 
     if (data) {
       setSongs(data);
+    }
+    if (error) {
+      console.error("Error fetching recommendations:", error);
     }
 
     setLoading(false);
