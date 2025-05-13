@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
 
     //========================= CONSTRUCT PUBLIC URL ==========================//
     const reqPayload = await req.json();
-    const public_url = IMAGE_URL + reqPayload.record + "/" +
+    const public_url = IMAGE_URL + reqPayload.record.bucket_id + "/" +
       reqPayload.record.name;
 
     console.log("reqPayload", reqPayload);
