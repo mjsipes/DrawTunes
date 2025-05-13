@@ -9,30 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      recommendations: {
+      drawings: {
         Row: {
-          artist_name: string
+          ai_message: string | null
           drawing_id: string | null
-          full_track_data: Json | null
-          id: string
-          preview_url: string | null
-          track_name: string
+          id: number
+          user_id: string | null
         }
         Insert: {
-          artist_name: string
+          ai_message?: string | null
           drawing_id?: string | null
-          full_track_data?: Json | null
-          id?: string
-          preview_url?: string | null
-          track_name: string
+          id?: number
+          user_id?: string | null
         }
         Update: {
-          artist_name?: string
+          ai_message?: string | null
           drawing_id?: string | null
+          id?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          drawing_id: string | null
+          id: string
+          songs_id: string | null
+        }
+        Insert: {
+          drawing_id?: string | null
+          id?: string
+          songs_id?: string | null
+        }
+        Update: {
+          drawing_id?: string | null
+          id?: string
+          songs_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_songs_id_fkey"
+            columns: ["songs_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      songs: {
+        Row: {
+          full_track_data: Json | null
+          id: string
+          last_updated: string | null
+        }
+        Insert: {
           full_track_data?: Json | null
           id?: string
-          preview_url?: string | null
-          track_name?: string
+          last_updated?: string | null
+        }
+        Update: {
+          full_track_data?: Json | null
+          id?: string
+          last_updated?: string | null
         }
         Relationships: []
       }

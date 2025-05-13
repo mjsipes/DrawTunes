@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Database } from "@/lib/supabase/database.types";
+// import type { Database } from "@/lib/supabase/database.types";
 
 import {
   Table,
