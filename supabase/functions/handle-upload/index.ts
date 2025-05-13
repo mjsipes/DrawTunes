@@ -1,8 +1,8 @@
 import OpenAI from "jsr:@openai/openai";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getSpotifyToken, searchTrack } from "./spotify.ts";
 const IMAGE_URL =
   "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/";
-const LOCAL_IMAGE_URL = "http://127.0.0.1:54321/storage/v1/object/public/";
 
 Deno.serve(async (req) => {
   try {
@@ -135,41 +135,79 @@ The response must be parseable by JSON.parse() without any modifications.`,
     console.log("Message:", message.substring(0, 50) + "..."); // Show first 50 chars
 
     //========================= SPOTIFY LOOKUP ==========================//
-    // Query Spotify API for all songs
+    // Query Spotify API directly instead of using Supabase function
     let spotifyResults;
     try {
-      const { data, error } = await supabase.functions.invoke("spotify-rec", {
-        body: {
-          songs: songs, // Pass the entire songs array to your Spotify function
-        },
-      });
+      // Get Spotify access token
+      const token = await getSpotifyToken();
 
-      console.log("Spotify API response received");
+      // Search for each song in parallel
+      const searchPromises = songs.map((song) =>
+        searchTrack(token, song.title, song.artist)
+      );
 
-      if (error) {
-        console.error("Spotify API error:", error);
-        return new Response(
-          JSON.stringify({
-            error: "Spotify API error",
-            details: error,
-            aiRecommendations: responseData, // Return the AI recommendations even if Spotify lookup fails
-          }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
+      // Wait for all searches to complete
+      const results = await Promise.all(searchPromises);
+
+      // Extract track IDs from successful searches
+      const trackIds = results
+        .filter((result) => result.success && result.track && result.track.id)
+        .map((result) => result.track.id);
+
+      // Get detailed tracks info if we have any IDs
+      let detailedTracks = [];
+      if (trackIds.length > 0) {
+        const chunkSize = 50;
+        for (let i = 0; i < trackIds.length; i += chunkSize) {
+          const chunk = trackIds.slice(i, i + chunkSize);
+          const idsParam = chunk.join(",");
+
+          const tracksResponse = await fetch(
+            `https://api.spotify.com/v1/tracks?ids=${idsParam}`,
+            {
+              headers: {
+                "Authorization": `Bearer ${token}`,
+              },
+            },
+          );
+
+          if (tracksResponse.ok) {
+            const tracksData = await tracksResponse.json();
+            if (tracksData.tracks) {
+              detailedTracks = [...detailedTracks, ...tracksData.tracks];
+            }
+          }
+        }
       }
 
+      // Combine results with detailed track information
+      const finalResults = results.map((result) => {
+        if (result.success && result.track) {
+          const detailedTrack = detailedTracks.find((t) =>
+            t.id === result.track.id
+          );
+          return {
+            query: result.query,
+            success: true,
+            track: detailedTrack || result.track,
+          };
+        }
+        return result;
+      });
+
       console.log("Spotify data retrieved successfully");
-      spotifyResults = data;
+      spotifyResults = {
+        totalRequested: songs.length,
+        totalFound: trackIds.length,
+        results: finalResults,
+      };
     } catch (e) {
       console.error("Error processing Spotify request:", e);
       return new Response(
         JSON.stringify({
           error: "Failed to process Spotify request",
           details: e.message,
-          aiRecommendations: responseData, // Return the AI recommendations even if Spotify lookup fails
+          aiRecommendations: responseData,
         }),
         {
           status: 500,
@@ -177,7 +215,6 @@ The response must be parseable by JSON.parse() without any modifications.`,
         },
       );
     }
-
     //====================== DATABASE STORAGE =======================//
     // Store all found tracks in the database
     console.log("Inserting track data into recommendations table");
