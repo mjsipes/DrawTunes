@@ -22,26 +22,37 @@ Deno.serve(async (req) => {
       },
     );
 
-    //========================= EXTRACT PAYLOAD ==========================//
-    // Extract image information from webhook payload
+    //========================= CONSTRUCT PUBLIC URL ==========================//
     const reqPayload = await req.json();
-    const record = reqPayload.record;
-    const bucket_id = record.bucket_id;
-    const owner_id = record.owner_id;
-    const drawing_id = record.id;
-    const name = record.name;
-    console.log("reqPayload", reqPayload);
-    console.log("record:", record);
-    console.log("bucket_id:", bucket_id);
-    console.log("drawing_id:", drawing_id);
-    console.log("owner_id:", owner_id);
-    console.log("name:", name);
+    const public_url = IMAGE_URL + reqPayload.record + "/" +
+      reqPayload.record.name;
 
-    // Construct public URL for the uploaded image
-    const public_url = IMAGE_URL + bucket_id + "/" + name;
+    console.log("reqPayload", reqPayload);
+    console.log("bucket_id:", reqPayload.record.bucket_id);
+    console.log("drawing_id:", reqPayload.record.id);
+    console.log("owner_id:", reqPayload.record.owner_id);
+    console.log("name:", reqPayload.record.name);
     console.log("public_url:", public_url);
     //========================= OPENAI ANALYSIS =========================//
     const { message, songs } = await generateMusicRecommendations(public_url);
+
+    //add ai message for image to database
+    {
+      const { data, error } = await supabase
+        .from("drawings")
+        .insert([
+          {
+            drawing_id: reqPayload.record.id,
+            user_id: reqPayload.record.owner_id,
+            ai_message: message,
+          },
+        ])
+        .select();
+
+      console.log("insert_drawing_data: ", data);
+      console.log("insert_drawing_error: ", error);
+    }
+
     //========================= SPOTIFY LOOKUP ==========================//
     // Query Spotify API directly instead of using Supabase function
     let spotifyResults;
@@ -154,8 +165,8 @@ Deno.serve(async (req) => {
             .insert([
               {
                 track_name: trackData.name,
-                drawing_id: drawing_id,
-                owner_id: owner_id,
+                drawing_id: reqPayload.record.id,
+                owner_id: reqPayload.record.owner_id,
                 artist_name: trackData.artists && trackData.artists.length > 0
                   ? trackData.artists[0].name
                   : "Unknown Artist",
