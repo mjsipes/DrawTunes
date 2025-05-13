@@ -1,3 +1,8 @@
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 // Environment variables for your Spotify API credentials
@@ -22,7 +27,6 @@ async function getSpotifyToken() {
 
 Deno.serve(async (req) => {
   try {
-    // Check if it's a POST request
     if (req.method !== "POST") {
       return new Response(
         JSON.stringify({ error: "Method not allowed" }),
@@ -33,7 +37,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body to get title and artist
+    // Parse request body
     const requestData = await req.json();
     const { title, artist } = requestData;
 

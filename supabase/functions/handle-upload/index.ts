@@ -2,9 +2,12 @@ import OpenAI from "jsr:@openai/openai";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 const IMAGE_URL =
   "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/";
+const LOCAL_IMAGE_URL = "http://127.0.0.1:54321/storage/v1/object/public/";
 
 Deno.serve(async (req) => {
   try {
+    console.log("hello from handle-upload function");
+
     //=========================== INITIALIZATION ===========================//
     // Initialize Supabase client with authenticationnn. can i be happy now?
     const supabase = createClient(
@@ -37,7 +40,6 @@ Deno.serve(async (req) => {
     // Construct public URL for the uploaded image
     const public_url = IMAGE_URL + bucket_id + "/" + name;
     console.log("public_url:", public_url);
-
     //========================= OPENAI ANALYSIS =========================//
     // Initialize OpenAI client
     const apiKey = Deno.env.get("OPENAI_API_KEY");
@@ -45,6 +47,7 @@ Deno.serve(async (req) => {
       apiKey: apiKey,
     });
 
+    const num_songs = 5; // Number of songs to recommend
     // Query GPT-4 for song recommendations based on image
     const response = await openai.responses.create({
       model: "gpt-4.1-mini",
@@ -54,29 +57,44 @@ Deno.serve(async (req) => {
           content: [
             {
               type: "input_text",
-              text:
-                `generate music suggestions based on this image: Describe the mood, setting, and cultural context, and suggest music styles, artists, or songs from various languages that would enhance the scene. Consider genres and artists from popular global music scenes, including American, Latin, European, Asian, and African influences, with options in languages like English, Spanish, French, Hindi, Korean, Arabic, and more. Base your suggestions on the image's emotional tone, colors, and visual themes, aligning music choices with the ambiance and cultural diversity reflected. Make sure to include both mainstream popular songs, as well as more obscure songs from underground/cultural audiences. try to prioritize more popular songs. List 10 songs in JSON format, with a key "songs" which contains an array, each array element matches the format of a key "artist" which contains the artists name, and the key "title" which contains the songs title. Do not add any other text to your response, only the JSON format specified. If you would like, you can place exactly why you picked these songs in a new value on the JSON object titled "reasoning", but the overall structure of your response should be purely JSON.`,
+              text: `Generate music recommendations in this EXACT JSON format:
+
+{
+  "songs": [
+    {"title": "Song Name 1", "artist": "Artist Name 1"},
+    {"title": "Song Name 2", "artist": "Artist Name 2"}
+    ...
+  ],
+  "message": "Brief reasoning for these selections"
+}
+
+Based on this image: Analyze the mood, setting, cultural context, and visual elements. Select ${num_songs} songs that match the emotional tone, colors, and themes shown. Include:
+- A mix of mainstream hits (70%) and culturally significant tracks (30%)
+- Diverse global representation (American, Latin, European, Asian, African)
+- Songs in various languages (English, Spanish, French, Hindi, Korean, Arabic, etc.)
+- Music that complements the scene's emotional atmosphere
+
+IMPORTANT RESPONSE RULES:
+1. Return ONLY valid JSON with no markdown formatting
+2. Include EXACTLY ${num_songs} songs
+3. Each song MUST have ONLY two fields: "title" and "artist"
+4. Include a brief "message" field explaining your selections
+5. Do not include ANY explanatory text outside the JSON
+6. If no image is provided, return a diverse sample of ${num_songs} popular songs
+
+The response must be parseable by JSON.parse() without any modifications.`,
             },
-            {
-              type: "input_image",
-              image_url: public_url,
-              detail: "auto",
-            },
+            // {
+            //   type: "input_image",
+            //   image_url: public_url,
+            //   detail: "auto",
+            // },
           ],
         },
       ],
     });
-    // console.log("response: ", response.output_text);
-    // const responseData = JSON.parse(response.output_text);
-    // console.log("responseData:", responseData);
-    // const reasoning = responseData.reasoning;
-    // const firstSongArtist = responseData.songs[0].artist;
-    // const firstSongTitle = responseData.songs[0].title;
 
-    // console.log("Reasoning:", reasoning);
-    // console.log("First Song Artist:", firstSongArtist);
-    // console.log("First Song Title:", firstSongTitle);
-    console.log("response: ", response.output_text);
+    console.log("OpenAI response received");
 
     // Remove markdown code block syntax if present
     let cleanedResponse = response.output_text.trim();
@@ -89,53 +107,140 @@ Deno.serve(async (req) => {
     }
 
     // Now parse the cleaned JSON
-    const responseData = JSON.parse(cleanedResponse);
-    console.log("responseData:", responseData);
-
-    // Extract the reasoning and first song
-    const reasoning = responseData.reasoning;
-    const firstSongArtist = responseData.songs[0].artist;
-    const firstSongTitle = responseData.songs[0].title;
-
-    console.log("Reasoning:", reasoning.substring(0, 50) + "..."); // Show first 50 chars
-    console.log("First Song:", firstSongArtist, "-", firstSongTitle);
-
-    //========================= SPOTIFY LOOKUP ==========================//
-    // Query Spotify API for song details (hardcoded example)
-    const { data, error } = await supabase.functions.invoke("spotify", {
-      body: {
-        "title": firstSongTitle,
-        "artist": firstSongArtist,
-      },
-    });
-    console.log("spotify data:", data);
-    console.log("spotify error:", error);
-
-    // Extract track information
-    const track1Data = data.tracks.items[0];
-    console.log("track1Data:", track1Data);
-
-    //====================== DATABASE STORAGE =======================//
-    // TODO: Store data in database
-    {
-      console.log("inserting complete track data into recommendations table");
-      const { data: insertData, error: insertError } = await supabase
-        .from("recommendations")
-        .insert([
-          {
-            track_name: track1Data.name,
-            drawing_id: drawing_id,
-            owner_id: owner_id,
-            artist_name: track1Data.artists[0].name,
-            preview_url: track1Data.external_urls.spotify,
-            full_track_data: track1Data, // Store the complete track object as JSON
-          },
-        ])
-        .select();
-      console.log("insertdata:", insertData);
-      console.log("inserterror:", insertError);
+    let responseData;
+    try {
+      responseData = JSON.parse(cleanedResponse);
+      console.log("Successfully parsed song recommendations");
+    } catch (e) {
+      console.error("Error parsing OpenAI response:", e);
+      // Return error response
+      return new Response(
+        JSON.stringify({
+          error: "Failed to parse AI recommendations",
+          details: e.message,
+          response: cleanedResponse.substring(0, 200) + "...", // First 200 chars for debugging
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
+    // Extract the message and songs
+    const message = responseData.message || "No reasoning provided";
+    const songs = responseData.songs || [];
+
+    console.log(`Found ${songs.length} song recommendations`);
+    console.log("Message:", message.substring(0, 50) + "..."); // Show first 50 chars
+
+    //========================= SPOTIFY LOOKUP ==========================//
+    // Query Spotify API for all songs
+    let spotifyResults;
+    try {
+      const { data, error } = await supabase.functions.invoke("spotify-rec", {
+        body: {
+          songs: songs, // Pass the entire songs array to your Spotify function
+        },
+      });
+
+      console.log("Spotify API response received");
+
+      if (error) {
+        console.error("Spotify API error:", error);
+        return new Response(
+          JSON.stringify({
+            error: "Spotify API error",
+            details: error,
+            aiRecommendations: responseData, // Return the AI recommendations even if Spotify lookup fails
+          }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      console.log("Spotify data retrieved successfully");
+      spotifyResults = data;
+    } catch (e) {
+      console.error("Error processing Spotify request:", e);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to process Spotify request",
+          details: e.message,
+          aiRecommendations: responseData, // Return the AI recommendations even if Spotify lookup fails
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    //====================== DATABASE STORAGE =======================//
+    // Store all found tracks in the database
+    console.log("Inserting track data into recommendations table");
+    const insertions = [];
+    const errors = [];
+
+    // Check if we have valid Spotify results
+    if (
+      spotifyResults && spotifyResults.results &&
+      Array.isArray(spotifyResults.results)
+    ) {
+      // Process each track result
+      for (const result of spotifyResults.results) {
+        // Skip tracks that weren't found in Spotify
+        if (!result.success || !result.track) {
+          errors.push({
+            query: result.query,
+            error: result.error || "Track not found",
+          });
+          continue;
+        }
+
+        const trackData = result.track;
+
+        // Insert the track into the database
+        try {
+          const { data: insertData, error: insertError } = await supabase
+            .from("recommendations")
+            .insert([
+              {
+                track_name: trackData.name,
+                drawing_id: drawing_id,
+                owner_id: owner_id,
+                artist_name: trackData.artists && trackData.artists.length > 0
+                  ? trackData.artists[0].name
+                  : "Unknown Artist",
+                preview_url: trackData.external_urls?.spotify ||
+                  trackData.preview_url || null,
+                full_track_data: trackData, // Store the complete track object as JSON
+                ai_reasoning: message, // Store the AI reasoning
+              },
+            ])
+            .select();
+
+          if (insertError) {
+            console.error("Error inserting track:", insertError);
+            errors.push({
+              track: trackData.name,
+              error: insertError,
+            });
+          } else {
+            console.log(`Successfully inserted track: ${trackData.name}`);
+            insertions.push(insertData[0]);
+          }
+        } catch (e) {
+          console.error("Exception inserting track:", e);
+          errors.push({
+            track: trackData.name,
+            error: e.message,
+          });
+        }
+      }
+    }
     //---------------------- RETURN RESPONSE ------------------------//
     //                                                              //
     //                                                              //
