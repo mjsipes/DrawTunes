@@ -136,7 +136,8 @@ Deno.serve(async (req) => {
     }
     //====================== DATABASE STORAGE =======================//
     // Store all found tracks in the database
-    console.log("Inserting track data into recommendations table");
+    //====================== DATABASE STORAGE =======================//
+    console.log("Processing track data for new schema");
     const insertions = [];
     const errors = [];
 
@@ -158,38 +159,64 @@ Deno.serve(async (req) => {
 
         const trackData = result.track;
 
-        // Insert the track into the database
         try {
-          const { data: insertData, error: insertError } = await supabase
+          // Check if song already exists in songs table by matching track ID
+          const { data: existingSong } = await supabase
+            .from("songs")
+            .select("id")
+            .eq("full_track_data->id", trackData.id)
+            .maybeSingle();
+
+          let songId;
+
+          if (existingSong) {
+            // Song exists, use its ID
+            songId = existingSong.id;
+          } else {
+            // Song doesn't exist, insert into songs table
+            const { data: newSong, error: songError } = await supabase
+              .from("songs")
+              .insert([{
+                full_track_data: trackData,
+                last_updated: new Date().toISOString(),
+              }])
+              .select();
+
+            if (songError) {
+              console.error("Error inserting song:", songError);
+              errors.push({
+                track: trackData.name,
+                error: songError,
+              });
+              continue;
+            }
+
+            songId = newSong[0].id;
+          }
+
+          // Now insert into recommendations table
+          const { data: recData, error: recError } = await supabase
             .from("recommendations")
-            .insert([
-              {
-                track_name: trackData.name,
-                drawing_id: reqPayload.record.id,
-                owner_id: reqPayload.record.owner_id,
-                artist_name: trackData.artists && trackData.artists.length > 0
-                  ? trackData.artists[0].name
-                  : "Unknown Artist",
-                preview_url: trackData.external_urls?.spotify ||
-                  trackData.preview_url || null,
-                full_track_data: trackData, // Store the complete track object as JSON
-                ai_reasoning: message, // Store the AI reasoning
-              },
-            ])
+            .insert([{
+              drawing_id: reqPayload.record.id,
+              songs_id: songId,
+            }])
             .select();
 
-          if (insertError) {
-            console.error("Error inserting track:", insertError);
+          if (recError) {
+            console.error("Error creating recommendation:", recError);
             errors.push({
               track: trackData.name,
-              error: insertError,
+              error: recError,
             });
           } else {
-            console.log(`Successfully inserted track: ${trackData.name}`);
-            insertions.push(insertData[0]);
+            console.log(
+              `Successfully created recommendation for: ${trackData.name}`,
+            );
+            insertions.push(recData[0]);
           }
         } catch (e) {
-          console.error("Exception inserting track:", e);
+          console.error("Exception processing track:", e);
           errors.push({
             track: trackData.name,
             error: e.message,
