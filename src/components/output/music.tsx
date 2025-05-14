@@ -24,7 +24,6 @@ export default function MusicRecommendations() {
   const supabase = createClient();
 
   // Fetch existing recommendations on load
-  // Fetch existing recommendations on load
   const fetchRecommendations = async () => {
     if (!user?.id) return;
 
@@ -57,8 +56,7 @@ export default function MusicRecommendations() {
           `
         id,
         drawing_id,
-        songs_id,
-        songs:songs_id (
+        songs:song_id (
           id,
           full_track_data,
           last_updated
@@ -70,11 +68,11 @@ export default function MusicRecommendations() {
       if (error) {
         console.error("Error fetching recommendations:", error);
       } else if (data) {
+        console.log("Fetched recommendations:", data);
         // Transform data to match expected format
         const formattedRecommendations = data.map((item) => ({
           id: item.id,
           drawing_id: item.drawing_id,
-          songs_id: item.songs_id,
           song: item.songs,
         }));
 
