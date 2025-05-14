@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
         .insert([
           {
             drawing_id: reqPayload.record.id,
+            drawing_url: public_url,
             user_id: reqPayload.record.owner_id,
             ai_message: message,
           },
@@ -199,7 +200,7 @@ Deno.serve(async (req) => {
             .from("recommendations")
             .insert([{
               drawing_id: reqPayload.record.id,
-              songs_id: songId,
+              song_id: songId,
             }])
             .select();
 
