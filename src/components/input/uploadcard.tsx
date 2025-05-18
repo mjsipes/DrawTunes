@@ -14,8 +14,8 @@ import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
 
 export default function UploadCard() {
   const props = useSupabaseUpload({
-    bucketName: "images",
-    path: "images",
+    bucketName: "drawings",
+    path: "drawings",
     allowedMimeTypes: ["image/*"],
     maxFiles: 1,
     maxFileSize: 1000 * 1000 * 10, // 10MB,
