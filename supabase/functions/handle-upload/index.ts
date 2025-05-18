@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
             drawing_url: public_url,
             user_id: reqPayload.record.owner_id,
             ai_message: message,
+            created_at: reqPayload.record.created_at,
           },
         ])
         .select();
