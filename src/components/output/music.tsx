@@ -79,6 +79,16 @@ export default function MusicRecommendations() {
 
   // Fetch recommendations for the active drawing
   useEffect(() => {
+    const debouncedFetchRecommendations = (() => {
+      let timeout;
+      return () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          fetchRecommendations();
+        }, 100); // 100ms debounce time
+      };
+    })();
+
     const fetchRecommendations = async () => {
       if (!activeDrawingId) return;
 
@@ -140,8 +150,8 @@ export default function MusicRecommendations() {
           },
           (payload) => {
             console.log("New recommendation received:", payload);
+            debouncedFetchRecommendations();
             // Fetch updated recommendations for this drawing
-            fetchRecommendations();
           }
         )
         .subscribe();
