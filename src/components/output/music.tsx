@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
-// import type { Database } from "@/lib/supabase/database.types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
   Table,
@@ -19,77 +19,115 @@ import {
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
   const user = useAuth();
 
   const supabase = createClient();
 
-  // Fetch existing recommendations on load
-  const fetchRecommendations = async () => {
-    if (!user?.id) return;
-
-    try {
-      // First, get all drawings that belong to the user
-      const { data: userDrawings, error: drawingsError } = await supabase
-        .from("drawings")
-        .select("drawing_id")
-        .eq("user_id", user.id);
-
-      if (drawingsError) {
-        console.error("Error fetching user drawings:", drawingsError);
-        setLoading(false);
-        return;
-      }
-
-      if (!userDrawings || userDrawings.length === 0) {
-        setRecommendations([]);
-        setLoading(false);
-        return;
-      }
-
-      // Extract drawing IDs
-      const drawingIds = userDrawings.map((d) => d.drawing_id);
-
-      // Now fetch recommendations for these drawings
-      const { data, error } = await supabase
-        .from("recommendations")
-        .select(
-          `
-        id,
-        drawing_id,
-        songs:song_id (
-          id,
-          full_track_data,
-          last_updated
-        )
-      `
-        )
-        .in("drawing_id", drawingIds);
-
-      if (error) {
-        console.error("Error fetching recommendations:", error);
-      } else if (data) {
-        console.log("Fetched recommendations:", data);
-        // Transform data to match expected format
-        const formattedRecommendations = data.map((item) => ({
-          id: item.id,
-          drawing_id: item.drawing_id,
-          song: item.songs,
-        }));
-
-        setRecommendations(formattedRecommendations);
-      }
-    } catch (err) {
-      console.error("Error in fetchRecommendations:", err);
-    }
-
-    setLoading(false);
-  };
-
+  // Fetch most recent drawing ID whenever user changes
   useEffect(() => {
-    if (user?.id) {
-      fetchRecommendations();
+    const fetchMostRecentDrawing = async () => {
+      if (!user?.id) return;
 
-      // Set up realtime subscription
+      try {
+        const { data, error } = await supabase
+          .from("drawings")
+          .select("drawing_id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.error("Error fetching most recent drawing:", error);
+        } else if (data && data.length > 0) {
+          setActiveDrawingId(data[0].drawing_id);
+        }
+      } catch (err) {
+        console.error("Error in fetchMostRecentDrawing:", err);
+      }
+    };
+
+    fetchMostRecentDrawing();
+
+    // Subscribe to changes in the drawings table for this user
+    if (user?.id) {
+      const channel = supabase
+        .channel("drawings-latest-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "drawings",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            console.log("New drawing inserted:", payload);
+            // Set the active drawing ID to the newly inserted one
+            if (payload.new && payload.new.drawing_id) {
+              setActiveDrawingId(payload.new.drawing_id);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user?.id]);
+
+  // Fetch recommendations for the active drawing
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      if (!activeDrawingId) return;
+
+      setLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from("recommendations")
+          .select(
+            `
+            id,
+            drawing_id,
+            songs:song_id (
+              id,
+              full_track_data,
+              last_updated
+            )
+          `
+          )
+          .eq("drawing_id", activeDrawingId);
+
+        if (error) {
+          console.error("Error fetching recommendations:", error);
+        } else if (data) {
+          console.log(
+            "Fetched recommendations for drawing:",
+            activeDrawingId,
+            data
+          );
+          // Transform data to match expected format
+          const formattedRecommendations = data.map((item) => ({
+            id: item.id,
+            drawing_id: item.drawing_id,
+            song: item.songs,
+          }));
+
+          setRecommendations(formattedRecommendations);
+        }
+      } catch (err) {
+        console.error("Error in fetchRecommendations:", err);
+      }
+
+      setLoading(false);
+    };
+
+    fetchRecommendations();
+
+    // Subscribe to new recommendations for this drawing
+    if (activeDrawingId) {
       const channel = supabase
         .channel("recommendations-channel")
         .on(
@@ -98,9 +136,11 @@ export default function MusicRecommendations() {
             event: "INSERT",
             schema: "public",
             table: "recommendations",
+            filter: `drawing_id=eq.${activeDrawingId}`,
           },
           (payload) => {
-            console.log("New recommendation received!", payload);
+            console.log("New recommendation received:", payload);
+            // Fetch updated recommendations for this drawing
             fetchRecommendations();
           }
         )
@@ -110,7 +150,7 @@ export default function MusicRecommendations() {
         supabase.removeChannel(channel);
       };
     }
-  }, [supabase, user?.id]);
+  }, [activeDrawingId]);
 
   if (loading) {
     return (
@@ -140,7 +180,14 @@ export default function MusicRecommendations() {
                     <TableCell colSpan={5} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <Music size={32} className="text-slate-400" />
-                        <span>No music recommendations yet</span>
+                        {activeDrawingId ? (
+                          <div className="space-y-2 mt-10">
+                            <Skeleton className="h-4 w-[350px]" />
+                            <Skeleton className="h-4 w-[250px]" />
+                          </div>
+                        ) : (
+                          <span>No music recommendations yet</span>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
