@@ -326,51 +326,19 @@ export default function MusicRecommendations() {
     }
   };
 
-  // Remove a song from recommendations
-  const removeSong = (index: number) => {
-    if (index < 0 || index >= recommendations.length) return;
-
-    // Create a copy of recommendations
-    const updatedRecommendations = [...recommendations];
-
-    // Remove the song at the specified index
-    updatedRecommendations.splice(index, 1);
-
-    // Update state
-    setRecommendations(updatedRecommendations);
-
-    // Adjust currentSongIndex if needed
-    if (currentSongIndex !== null) {
-      if (index === currentSongIndex) {
-        // If we removed the current song, play the next one
-        if (index < updatedRecommendations.length) {
-          // Play the "new" song at this index (which was the next song)
-          playSong(index);
-        } else if (updatedRecommendations.length > 0) {
-          // Play the last song if we removed the last song
-          playSong(updatedRecommendations.length - 1);
-        } else {
-          // No songs left
-          stopAudio();
-          setCurrentSongIndex(null);
-          setIsPlaying(false);
-        }
-      } else if (index < currentSongIndex) {
-        // If we removed a song before the current one, adjust index
-        setCurrentSongIndex(currentSongIndex - 1);
-      }
-    }
-  };
-
   const handleSkipSong = () => {
     // Get current index or default to 0 if nothing is playing
     const currentIndex = currentSongIndex !== null ? currentSongIndex : 0;
 
-    // Remove the current song from the queue
-    removeSong(currentIndex);
+    // Move to next song, wrapping around to beginning if at end
+    const nextIndex = (currentIndex + 1) % recommendations.length;
+
+    // Play the next song
+    playSong(nextIndex);
   };
 
   const handleSongEnd = () => {
+    // When song ends naturally, move to next song
     handleSkipSong();
   };
 
@@ -450,11 +418,7 @@ export default function MusicRecommendations() {
                   variant="ghost"
                   size="icon"
                   onClick={handleSkipSong}
-                  disabled={
-                    !isPlaying ||
-                    currentSongIndex === null ||
-                    currentSongIndex >= recommendations.length - 1
-                  }
+                  disabled={recommendations.length === 0}
                 >
                   <SkipForward size={18} />
                 </Button>
