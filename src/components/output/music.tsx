@@ -315,7 +315,9 @@ export default function MusicRecommendations() {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
-        clearInterval(progressIntervalRef.current);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+        }
       } else {
         audioRef.current.play();
         startProgressTracking();
@@ -405,7 +407,7 @@ export default function MusicRecommendations() {
                   <>
                     {getArtworkUrl(currentSong) ? (
                       <img
-                        src={getArtworkUrl(currentSong)}
+                        src={getArtworkUrl(currentSong)!}
                         alt={`${currentSong.collectionName || ""} cover`}
                         className="w-10 h-10 rounded-md object-cover shadow-sm"
                       />
@@ -522,7 +524,7 @@ export default function MusicRecommendations() {
                           <div className="flex items-center gap-2">
                             {getArtworkUrl(trackData) && (
                               <img
-                                src={getArtworkUrl(trackData)}
+                                src={getArtworkUrl(trackData)!}
                                 alt={`${trackData.collectionName || ""} cover`}
                                 className="w-8 h-8 rounded-sm object-cover shadow-sm"
                               />
