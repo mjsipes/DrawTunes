@@ -1,5 +1,5 @@
 import { Undo, RotateCcw } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { ReactSketchCanvas } from "react-sketch-canvas";
 import type { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -12,13 +12,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { useTheme } from "@/components/theme-provider";
 
 export default function DrawCard() {
   const supabase = createClient();
+  const { theme } = useTheme();
   const canvasRef = useRef<ReactSketchCanvasRef>(null);
   const [strokeColor, setStrokeColor] = useState("#6C90FF");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canvasColor, setCanvasColor] = useState("#FFFFFF");
+
+  // Update canvas color when theme changes
+  useEffect(() => {
+    const isDark =
+      theme === "dark" ||
+      (theme === "system" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+    setCanvasColor(isDark ? "#252525" : "#FFFFFF");
+  }, [theme]);
 
   const handleStrokeColorChange = (event: ChangeEvent<HTMLInputElement>) => {
     setStrokeColor(event.target.value);
@@ -82,7 +94,7 @@ export default function DrawCard() {
               ref={canvasRef}
               strokeWidth={4}
               strokeColor={strokeColor}
-              canvasColor="white"
+              canvasColor={canvasColor}
             />
           </div>
           <div className="flex justify-between items-center w-full">
