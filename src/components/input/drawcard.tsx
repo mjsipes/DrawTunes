@@ -29,7 +29,7 @@ export default function DrawCard() {
       theme === "dark" ||
       (theme === "system" &&
         window.matchMedia("(prefers-color-scheme: dark)").matches);
-    setCanvasColor(isDark ? "#252525" : "#FFFFFF");
+    setCanvasColor(isDark ? "oklch(0.205 0 0)" : "#FFFFFF");
   }, [theme]);
 
   const handleStrokeColorChange = (event: ChangeEvent<HTMLInputElement>) => {
