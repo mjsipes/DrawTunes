@@ -171,7 +171,7 @@ export default function MusicRecommendations() {
       setLoading(false);
     };
 
-    fetchRecommendations();
+    debouncedFetchRecommendations();
 
     // Subscribe to new recommendations for this drawing
     if (activeDrawingId) {
