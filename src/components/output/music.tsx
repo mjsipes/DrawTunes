@@ -64,7 +64,7 @@ export default function MusicRecommendations() {
       try {
         const { data, error } = await supabase
           .from("drawings")
-          .select("drawing_id")
+          .select("drawing_id, ai_message")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1);
@@ -73,6 +73,7 @@ export default function MusicRecommendations() {
           console.error("Error fetching most recent drawing:", error);
         } else if (data && data.length > 0) {
           setActiveDrawingId(data[0].drawing_id);
+          console.log(data[0].ai_message);
         }
       } catch (err) {
         console.error("Error in fetchMostRecentDrawing:", err);

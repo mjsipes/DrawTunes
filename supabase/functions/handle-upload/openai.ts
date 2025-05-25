@@ -46,11 +46,11 @@ IMPORTANT RESPONSE RULES:
 The response must be parseable by JSON.parse() without any modifications.`,
                     },
                     // Uncomment the following block to include the image
-                    // {
-                    //     type: "input_image",
-                    //     image_url: imageUrl,
-                    //     detail: "auto",
-                    // },
+                    {
+                        type: "input_image",
+                        image_url: imageUrl,
+                        detail: "auto",
+                    },
                 ],
             },
         ],
