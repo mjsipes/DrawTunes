@@ -116,7 +116,7 @@ export default function MusicRecommendations() {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
           fetchRecommendations();
-        }, 100);
+        }, 200);
       };
     })();
 
