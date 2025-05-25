@@ -5,6 +5,7 @@
     "npm:@eslint/js@^9.25.0": "9.26.0",
     "npm:@radix-ui/react-label@^2.1.6": "2.1.6_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@radix-ui/react-menubar@^1.1.14": "1.1.14_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
+    "npm:@radix-ui/react-progress@^1.1.6": "1.1.6_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@radix-ui/react-scroll-area@^1.2.8": "1.2.8_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@radix-ui/react-select@^2.2.4": "2.2.4_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@radix-ui/react-separator@^1.1.6": "1.1.6_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
@@ -639,6 +640,17 @@
       "integrity": "sha512-uHa+l/lKfxuDD2zjN/0peM/RhhSmRjr5YWdk/37EnSv1nJ88uvG85DPexSm8HdFQROd2VdERJ6ynXbkCFi+APw==",
       "dependencies": [
         "@radix-ui/react-slot",
+        "@types/react",
+        "@types/react-dom",
+        "react",
+        "react-dom"
+      ]
+    },
+    "@radix-ui/react-progress@1.1.6_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0": {
+      "integrity": "sha512-QzN9a36nKk2eZKMf9EBCia35x3TT+SOgZuzQBVIHyRrmYYi73VYBRK3zKwdJ6az/F5IZ6QlacGJBg7zfB85liA==",
+      "dependencies": [
+        "@radix-ui/react-context",
+        "@radix-ui/react-primitive",
         "@types/react",
         "@types/react-dom",
         "react",
@@ -2606,6 +2618,7 @@
         "npm:@eslint/js@^9.25.0",
         "npm:@radix-ui/react-label@^2.1.6",
         "npm:@radix-ui/react-menubar@^1.1.14",
+        "npm:@radix-ui/react-progress@^1.1.6",
         "npm:@radix-ui/react-scroll-area@^1.2.8",
         "npm:@radix-ui/react-select@^2.2.4",
         "npm:@radix-ui/react-separator@^1.1.6",

@@ -1,15 +1,47 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { generateMusicRecommendations } from "./openai.ts";
-import { getSpotifyToken, searchTrack } from "./spotify.ts";
+
 const IMAGE_URL =
   "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/";
+
+// iTunes API search function
+async function searchTrack(title: string, artist: string) {
+  const query = encodeURIComponent(`${title} ${artist}`);
+  const url =
+    `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: `iTunes search failed: ${response.status}`,
+      query: `${title} ${artist}`,
+    };
+  }
+
+  const data = await response.json();
+
+  if (data.results && data.results.length > 0) {
+    return {
+      success: true,
+      query: `${title} ${artist}`,
+      track: data.results[0],
+    };
+  } else {
+    return {
+      success: false,
+      query: `${title} ${artist}`,
+      error: `No results found for "${title}" by ${artist}`,
+    };
+  }
+}
 
 Deno.serve(async (req) => {
   try {
     console.log("hello from handle-upload function");
 
     //=========================== INITIALIZATION ===========================//
-    // Initialize Supabase client with authenticationnn. can i be happy now?
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -33,6 +65,7 @@ Deno.serve(async (req) => {
     console.log("owner_id:", reqPayload.record.owner_id);
     console.log("name:", reqPayload.record.name);
     console.log("public_url:", public_url);
+
     //========================= OPENAI ANALYSIS =========================//
     const { message, songs } = await generateMusicRecommendations(public_url);
 
@@ -55,80 +88,29 @@ Deno.serve(async (req) => {
       console.log("insert_drawing_error: ", error);
     }
 
-    //========================= SPOTIFY LOOKUP ==========================//
-    // Query Spotify API directly instead of using Supabase function
-    let spotifyResults;
+    //========================= ITUNES LOOKUP ==========================//
+    let itunesResults;
     try {
-      // Get Spotify access token
-      const token = await getSpotifyToken();
-
       // Search for each song in parallel
       const searchPromises = songs.map((song) =>
-        searchTrack(token, song.title, song.artist)
+        searchTrack(song.title, song.artist)
       );
 
       // Wait for all searches to complete
       const results = await Promise.all(searchPromises);
 
-      // Extract track IDs from successful searches
-      const trackIds = results
-        .filter((result) => result.success && result.track && result.track.id)
-        .map((result) => result.track.id);
-
-      // Get detailed tracks info if we have any IDs
-      let detailedTracks = [];
-      if (trackIds.length > 0) {
-        const chunkSize = 50;
-        for (let i = 0; i < trackIds.length; i += chunkSize) {
-          const chunk = trackIds.slice(i, i + chunkSize);
-          const idsParam = chunk.join(",");
-
-          const tracksResponse = await fetch(
-            `https://api.spotify.com/v1/tracks?ids=${idsParam}`,
-            {
-              headers: {
-                "Authorization": `Bearer ${token}`,
-              },
-            },
-          );
-
-          if (tracksResponse.ok) {
-            const tracksData = await tracksResponse.json();
-            if (tracksData.tracks) {
-              detailedTracks = [...detailedTracks, ...tracksData.tracks];
-            }
-          }
-        }
-      }
-
-      // Combine results with detailed track information
-      const finalResults = results.map((result) => {
-        if (result.success && result.track) {
-          const detailedTrack = detailedTracks.find((t) =>
-            t.id === result.track.id
-          );
-          return {
-            query: result.query,
-            success: true,
-            track: detailedTrack || result.track,
-          };
-        }
-        return result;
-      });
-
-      console.log("Spotify data retrieved successfully");
-      spotifyResults = {
+      console.log("iTunes data retrieved successfully");
+      itunesResults = {
         totalRequested: songs.length,
-        totalFound: trackIds.length,
-        results: finalResults,
+        totalFound: results.filter((r) => r.success).length,
+        results: results,
       };
     } catch (e) {
-      console.error("Error processing Spotify request:", e);
+      console.error("Error processing iTunes request:", e);
       return new Response(
         JSON.stringify({
-          error: "Failed to process Spotify request",
+          error: "Failed to process iTunes request",
           details: e.message,
-          aiRecommendations: responseData,
         }),
         {
           status: 500,
@@ -136,21 +118,17 @@ Deno.serve(async (req) => {
         },
       );
     }
-    //====================== DATABASE STORAGE =======================//
-    // Store all found tracks in the database
+
     //====================== DATABASE STORAGE =======================//
     console.log("Processing track data for new schema");
     const insertions = [];
     const errors = [];
 
-    // Check if we have valid Spotify results
     if (
-      spotifyResults && spotifyResults.results &&
-      Array.isArray(spotifyResults.results)
+      itunesResults && itunesResults.results &&
+      Array.isArray(itunesResults.results)
     ) {
-      // Process each track result
-      for (const result of spotifyResults.results) {
-        // Skip tracks that weren't found in Spotify
+      for (const result of itunesResults.results) {
         if (!result.success || !result.track) {
           errors.push({
             query: result.query,
@@ -162,20 +140,19 @@ Deno.serve(async (req) => {
         const trackData = result.track;
 
         try {
-          // Check if song already exists in songs table by matching track ID
+          // Check if song already exists in songs table by matching trackId
           const { data: existingSong } = await supabase
             .from("songs")
             .select("id")
-            .eq("full_track_data->id", trackData.id)
+            .eq("full_track_data->trackId", trackData.trackId)
             .maybeSingle();
 
           let songId;
 
           if (existingSong) {
-            // Song exists, use its ID
             songId = existingSong.id;
           } else {
-            // Song doesn't exist, insert into songs table
+            // Insert new song with iTunes track data
             const { data: newSong, error: songError } = await supabase
               .from("songs")
               .insert([{
@@ -187,7 +164,7 @@ Deno.serve(async (req) => {
             if (songError) {
               console.error("Error inserting song:", songError);
               errors.push({
-                track: trackData.name,
+                track: trackData.trackName,
                 error: songError,
               });
               continue;
@@ -196,7 +173,7 @@ Deno.serve(async (req) => {
             songId = newSong[0].id;
           }
 
-          // Now insert into recommendations table
+          // Insert into recommendations table
           const { data: recData, error: recError } = await supabase
             .from("recommendations")
             .insert([{
@@ -208,29 +185,26 @@ Deno.serve(async (req) => {
           if (recError) {
             console.error("Error creating recommendation:", recError);
             errors.push({
-              track: trackData.name,
+              track: trackData.trackName,
               error: recError,
             });
           } else {
             console.log(
-              `Successfully created recommendation for: ${trackData.name}`,
+              `Successfully created recommendation for: ${trackData.trackName}`,
             );
             insertions.push(recData[0]);
           }
         } catch (e) {
           console.error("Exception processing track:", e);
           errors.push({
-            track: trackData.name,
+            track: trackData.trackName,
             error: e.message,
           });
         }
       }
     }
+
     //---------------------- RETURN RESPONSE ------------------------//
-    //                                                              //
-    //                                                              //
-    //                                                              //
-    //                                                              //
     const reply = "hi";
     return new Response(reply, {
       headers: {
