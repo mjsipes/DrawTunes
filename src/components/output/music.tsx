@@ -18,15 +18,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Type definitions
+interface iTunesTrack {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string;
+  previewUrl?: string;
+  artworkUrl30?: string;
+  artworkUrl60?: string;
+  artworkUrl100?: string;
+  trackViewUrl?: string;
+}
+
+interface Song {
+  id: string;
+  full_track_data: iTunesTrack;
+  last_updated: string;
+}
+
+interface Recommendation {
+  id: string;
+  drawing_id: string;
+  song: Song;
+}
+
 export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState([]);
-  const [activeDrawingId, setActiveDrawingId] = useState(null);
-  const [currentSongIndex, setCurrentSongIndex] = useState(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
+  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const audioRef = useRef(null);
-  const progressIntervalRef = useRef(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const user = useAuth();
 
   const supabase = createClient();
@@ -86,7 +111,7 @@ export default function MusicRecommendations() {
   // Fetch recommendations for the active drawing
   useEffect(() => {
     const debouncedFetchRecommendations = (() => {
-      let timeout;
+      let timeout: NodeJS.Timeout;
       return () => {
         clearTimeout(timeout);
         timeout = setTimeout(() => {
@@ -124,11 +149,13 @@ export default function MusicRecommendations() {
             activeDrawingId,
             data
           );
-          const formattedRecommendations = data.map((item) => ({
-            id: item.id,
-            drawing_id: item.drawing_id,
-            song: item.songs,
-          }));
+          const formattedRecommendations: Recommendation[] = data.map(
+            (item: any) => ({
+              id: item.id,
+              drawing_id: item.drawing_id,
+              song: item.songs,
+            })
+          );
 
           setRecommendations(formattedRecommendations);
 
@@ -179,7 +206,7 @@ export default function MusicRecommendations() {
   };
 
   // Helper to get track URL from iTunes data structure
-  const getTrackAudioUrl = (song) => {
+  const getTrackAudioUrl = (song: iTunesTrack): string | null => {
     // iTunes API provides previewUrl directly
     if (song?.previewUrl) {
       return song.previewUrl;
@@ -189,16 +216,19 @@ export default function MusicRecommendations() {
   };
 
   // Helper to get artwork URL with higher resolution
-  const getArtworkUrl = (song, size = 100) => {
-    const artworkKey = `artworkUrl${size}`;
+  const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
+    const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
     if (song?.[artworkKey]) {
       // Convert to higher resolution by replacing the size in the URL
-      return song[artworkKey].replace(`${size}x${size}bb.jpg`, "300x300bb.jpg");
+      return (song[artworkKey] as string).replace(
+        `${size}x${size}bb.jpg`,
+        "300x300bb.jpg"
+      );
     }
     return null;
   };
 
-  const playSong = (index) => {
+  const playSong = (index: number) => {
     if (index >= recommendations.length) return;
 
     // Stop any currently playing audio
@@ -226,7 +256,7 @@ export default function MusicRecommendations() {
           setIsPlaying(true);
           startProgressTracking();
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error("Playback failed:", err);
           handleSkipSong();
         });
@@ -295,7 +325,7 @@ export default function MusicRecommendations() {
   };
 
   // Remove a song from recommendations
-  const removeSong = (index) => {
+  const removeSong = (index: number) => {
     if (index < 0 || index >= recommendations.length) return;
 
     // Create a copy of recommendations
