@@ -26,6 +26,10 @@ interface Recommendation {
     song: Song;
 }
 
+// Cache for promises to prevent duplicate requests
+const drawingCache = new Map<string, Promise<any>>();
+const recommendationsCache = new Map<string, Promise<any>>();
+
 export function useMostRecentDrawing() {
     const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
     const user = useAuth();
@@ -56,7 +60,6 @@ export function useMostRecentDrawing() {
 
         fetchMostRecentDrawing();
 
-        // Subscribe to changes in the drawings table for this user
         if (user?.id) {
             const channel = supabase
                 .channel("drawings-latest-channel")
@@ -87,27 +90,14 @@ export function useMostRecentDrawing() {
 }
 
 export function useRecommendations(activeDrawingId: string | null) {
-    const [loading, setLoading] = useState(true);
     const [recommendations, setRecommendations] = useState<Recommendation[]>(
         [],
     );
     const supabase = createClient();
 
     useEffect(() => {
-        const debouncedFetchRecommendations = (() => {
-            let timeout: NodeJS.Timeout;
-            return () => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    fetchRecommendations();
-                }, 200);
-            };
-        })();
-
         const fetchRecommendations = async () => {
             if (!activeDrawingId) return;
-
-            setLoading(true);
 
             try {
                 const { data, error } = await supabase
@@ -146,13 +136,10 @@ export function useRecommendations(activeDrawingId: string | null) {
             } catch (err) {
                 console.error("Error in fetchRecommendations:", err);
             }
-
-            setLoading(false);
         };
 
-        debouncedFetchRecommendations();
+        fetchRecommendations();
 
-        // Subscribe to new recommendations for this drawing
         if (activeDrawingId) {
             const channel = supabase
                 .channel("recommendations-channel")
@@ -166,7 +153,7 @@ export function useRecommendations(activeDrawingId: string | null) {
                     },
                     (payload) => {
                         console.log("New recommendation received:", payload);
-                        debouncedFetchRecommendations();
+                        fetchRecommendations();
                     },
                 )
                 .subscribe();
@@ -177,5 +164,5 @@ export function useRecommendations(activeDrawingId: string | null) {
         }
     }, [activeDrawingId]);
 
-    return { recommendations, loading };
+    return { recommendations };
 }

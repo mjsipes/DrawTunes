@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { ExternalLink, Music, SkipForward, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -42,7 +41,72 @@ interface Recommendation {
   song: Song;
 }
 
-export default function MusicRecommendations() {
+// Skeleton components for loading states
+const AudioPlayerSkeleton = () => (
+  <Card className="mb-4">
+    <CardContent className="p-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-md" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-3 w-[80px]" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="w-8 h-8 rounded-md" />
+            <Skeleton className="w-8 h-8 rounded-md" />
+          </div>
+        </div>
+        <Skeleton className="h-1 w-full" />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const RecommendationsSkeleton = () => (
+  <Card>
+    <CardContent className="p-0">
+      <ScrollArea className="h-[280px]">
+        <Table className="border-collapse">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px] text-center">#</TableHead>
+              <TableHead className="w-[180px]">Track</TableHead>
+              <TableHead>Artist</TableHead>
+              <TableHead className="w-[80px] text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell className="text-center">
+                  <Skeleton className="h-4 w-4 mx-auto" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-8 h-8 rounded-sm" />
+                    <Skeleton className="h-4 w-[120px]" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-4 ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
+    </CardContent>
+  </Card>
+);
+
+// Main component content without loading state
+function MusicContent() {
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -51,7 +115,7 @@ export default function MusicRecommendations() {
 
   // Use custom hooks for data fetching
   const activeDrawingId = useMostRecentDrawing();
-  const { recommendations, loading } = useRecommendations(activeDrawingId);
+  const { recommendations } = useRecommendations(activeDrawingId);
 
   // Audio player functions
   const playFirstSong = () => {
@@ -62,11 +126,9 @@ export default function MusicRecommendations() {
 
   // Helper to get track URL from iTunes data structure
   const getTrackAudioUrl = (song: iTunesTrack): string | null => {
-    // iTunes API provides previewUrl directly
     if (song?.previewUrl) {
       return song.previewUrl;
     }
-
     return null;
   };
 
@@ -74,7 +136,6 @@ export default function MusicRecommendations() {
   const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
     const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
     if (song?.[artworkKey]) {
-      // Convert to higher resolution by replacing the size in the URL
       return (song[artworkKey] as string).replace(
         `${size}x${size}bb.jpg`,
         "300x300bb.jpg"
@@ -86,19 +147,14 @@ export default function MusicRecommendations() {
   const playSong = (index: number) => {
     if (index >= recommendations.length) return;
 
-    // Stop any currently playing audio
     stopAudio();
 
     setCurrentSongIndex(index);
     const song = recommendations[index]?.song?.full_track_data;
-
-    // Get appropriate audio URL for this track
     const audioUrl = getTrackAudioUrl(song);
 
     if (audioUrl) {
       audioRef.current = new Audio(audioUrl);
-
-      // Set up audio event listeners
       audioRef.current.addEventListener("ended", handleSongEnd);
       audioRef.current.addEventListener("error", () => {
         console.error("Error playing audio");
@@ -116,11 +172,7 @@ export default function MusicRecommendations() {
           handleSkipSong();
         });
     } else {
-      // If no URL available, we'll just "mark" this track as playing
-      // but won't actually play audio - just for UI purposes
       setIsPlaying(true);
-
-      // Auto-advance after a few seconds if no audio available
       setTimeout(() => {
         handleSkipSong();
       }, 5000);
@@ -162,7 +214,6 @@ export default function MusicRecommendations() {
       currentSongIndex === null &&
       recommendations.length > 0
     ) {
-      // Start playing first song if nothing is playing
       playFirstSong();
       return;
     }
@@ -182,37 +233,21 @@ export default function MusicRecommendations() {
   };
 
   const handleSkipSong = () => {
-    // Get current index or default to 0 if nothing is playing
     const currentIndex = currentSongIndex !== null ? currentSongIndex : 0;
-
-    // Move to next song, wrapping around to beginning if at end
     const nextIndex = (currentIndex + 1) % recommendations.length;
-
-    // Play the next song
     playSong(nextIndex);
   };
 
   const handleSongEnd = () => {
-    // When song ends naturally, move to next song
     handleSkipSong();
   };
 
-  // Cleanup audio on component unmount
   useEffect(() => {
     return () => {
       stopAudio();
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="w-[450px] h-[360px]">
-        <Loading />
-      </div>
-    );
-  }
-
-  // Get current song
   const currentSong =
     currentSongIndex !== null
       ? recommendations[currentSongIndex]?.song?.full_track_data
@@ -223,7 +258,6 @@ export default function MusicRecommendations() {
       <Card className="mb-4">
         <CardContent className="p-4">
           <div className="flex flex-col gap-2">
-            {/* Current playing info */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {currentSong ? (
@@ -280,7 +314,6 @@ export default function MusicRecommendations() {
               </div>
             </div>
 
-            {/* Progress bar */}
             <Progress value={progress} className="h-1 w-full" />
           </div>
         </CardContent>
@@ -379,5 +412,21 @@ export default function MusicRecommendations() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Main component with Suspense
+export default function MusicRecommendations() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-[450px]">
+          <AudioPlayerSkeleton />
+          <RecommendationsSkeleton />
+        </div>
+      }
+    >
+      <MusicContent />
+    </Suspense>
   );
 }
