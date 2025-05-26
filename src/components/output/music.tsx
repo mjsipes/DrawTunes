@@ -47,6 +47,7 @@ export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -73,7 +74,11 @@ export default function MusicRecommendations() {
           console.error("Error fetching most recent drawing:", error);
         } else if (data && data.length > 0) {
           setActiveDrawingId(data[0].drawing_id);
-          console.log(data[0].ai_message);
+          setAiMessage(data[0].ai_message);
+          console.log(
+            "AI Message for most recent drawing:",
+            data[0].ai_message
+          );
         }
       } catch (err) {
         console.error("Error in fetchMostRecentDrawing:", err);
@@ -94,10 +99,34 @@ export default function MusicRecommendations() {
             table: "drawings",
             filter: `user_id=eq.${user.id}`,
           },
-          (payload) => {
+          async (payload) => {
             console.log("New drawing inserted:", payload);
             if (payload.new && payload.new.drawing_id) {
               setActiveDrawingId(payload.new.drawing_id);
+
+              // Fetch the AI message for the new drawing
+              try {
+                const { data, error } = await supabase
+                  .from("drawings")
+                  .select("ai_message")
+                  .eq("drawing_id", payload.new.drawing_id)
+                  .single();
+
+                if (error) {
+                  console.error(
+                    "Error fetching AI message for new drawing:",
+                    error
+                  );
+                } else if (data) {
+                  setAiMessage(data.ai_message);
+                  console.log("AI Message for new drawing:", data.ai_message);
+                }
+              } catch (err) {
+                console.error(
+                  "Error fetching AI message for new drawing:",
+                  err
+                );
+              }
             }
           }
         )
@@ -432,6 +461,18 @@ export default function MusicRecommendations() {
         </CardContent>
       </Card>
 
+      {/* AI Message Card */}
+      {aiMessage && (
+        <Card className="mb-4">
+          <CardContent className="">
+            <div className="text-sm">
+              <p className="font-medium mb-1">AI Analysis:</p>
+              <p className="text-slate-600">{aiMessage}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardContent className="p-0">
           <ScrollArea className="h-[280px]">
@@ -451,10 +492,17 @@ export default function MusicRecommendations() {
                       <div className="flex flex-col items-center gap-2">
                         <Music size={32} className="text-slate-400" />
                         {activeDrawingId ? (
-                          <div className="space-y-2 mt-10">
-                            <Skeleton className="h-4 w-[350px]" />
-                            <Skeleton className="h-4 w-[250px]" />
-                          </div>
+                          aiMessage ? (
+                            <div className="text-center text-sm mt-4 max-w-[350px] mx-auto">
+                              <p className="font-medium mb-2">AI Analysis:</p>
+                              <p className="text-slate-600">{aiMessage}</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 mt-10">
+                              <Skeleton className="h-4 w-[350px]" />
+                              <Skeleton className="h-4 w-[250px]" />
+                            </div>
+                          )
                         ) : (
                           <span>No music recommendations yet</span>
                         )}

@@ -24,16 +24,12 @@ function App() {
               </a>
             </div>
 
-            <div className="flex justify-center space-x-16 w-full">
-              <div className="flex justify-end w-1/2 pr-4">
-                <div className="max-w-md">
-                  <TabsDemo />
-                </div>
+            <div className="flex justify-center gap-16 w-full">
+              <div className="max-w-md">
+                <TabsDemo />
               </div>
-              <div className="flex justify-start w-1/2 pl-4 mt-11">
-                <div className="max-w-md">
-                  <Music />
-                </div>
+              <div className="max-w-md mt-11 ">
+                <Music />
               </div>
             </div>
           </div>
