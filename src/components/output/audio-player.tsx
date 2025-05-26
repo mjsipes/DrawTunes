@@ -6,18 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
 
-interface iTunesTrack {
-  trackId: number;
-  trackName: string;
-  artistName: string;
-  collectionName: string;
-  previewUrl?: string;
-  artworkUrl30?: string;
-  artworkUrl60?: string;
-  artworkUrl100?: string;
-  trackViewUrl?: string;
-}
-
 interface AudioPlayerProps {
   currentSongIndex: number | null;
   onSkip: () => void;

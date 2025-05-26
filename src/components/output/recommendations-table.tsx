@@ -31,11 +31,7 @@ interface Song {
   last_updated: string;
 }
 
-interface Recommendation {
-  id: string;
-  drawing_id: string;
-  song: Song;
-}
+
 
 interface RecommendationsTableProps {
   currentSongIndex: number | null;
