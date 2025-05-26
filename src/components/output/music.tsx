@@ -50,7 +50,7 @@ const AudioPlayerSkeleton = () => (
           <div className="flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-md" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-4 w-[130px]" />
               <Skeleton className="h-3 w-[80px]" />
             </div>
           </div>
@@ -72,10 +72,10 @@ const RecommendationsSkeleton = () => (
         <Table className="border-collapse">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[60px] text-center">#</TableHead>
-              <TableHead className="w-[180px]">Track</TableHead>
-              <TableHead>Artist</TableHead>
-              <TableHead className="w-[80px] text-right">Action</TableHead>
+              <TableHead className="w-[40px] text-center">#</TableHead>
+              <TableHead className="w-[200px]">Track</TableHead>
+              <TableHead className="w-[130px]">Artist</TableHead>
+              <TableHead className="w-[40px] text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,7 +87,7 @@ const RecommendationsSkeleton = () => (
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Skeleton className="w-8 h-8 rounded-sm" />
-                    <Skeleton className="h-4 w-[120px]" />
+                    <Skeleton className="h-4 w-[130px]" />
                   </div>
                 </TableCell>
                 <TableCell>
@@ -255,7 +255,7 @@ function MusicContent() {
 
   return (
     <div className="w-[450px]">
-      <Card className="mb-4">
+      <Card className="mb-4 bg-red-400">
         <CardContent className="p-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -322,13 +322,13 @@ function MusicContent() {
       <Card>
         <CardContent className="p-0">
           <ScrollArea className="h-[280px]">
-            <Table className="border-collapse">
+            <Table className="border-collapse table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px] text-center">#</TableHead>
+                  <TableHead className="w-[30px] text-center">#</TableHead>
                   <TableHead className="w-[180px]">Track</TableHead>
-                  <TableHead>Artist</TableHead>
-                  <TableHead className="w-[80px] text-right">Action</TableHead>
+                  <TableHead className="w-[100px]">Artist</TableHead>
+                  <TableHead className="w-[40px] text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -363,7 +363,7 @@ function MusicContent() {
                         }`}
                         onClick={() => playSong(index)}
                       >
-                        <TableCell className="text-center text-sm">
+                        <TableCell className="w-[30px] text-center text-sm">
                           {isCurrentSong ? (
                             <div className="flex justify-center">
                               <Music size={16} className="text-blue-500" />
@@ -372,13 +372,13 @@ function MusicContent() {
                             index + 1
                           )}
                         </TableCell>
-                        <TableCell className="font-medium text-sm">
+                        <TableCell className="w-[180px] font-medium text-sm">
                           <div className="flex items-center gap-2">
                             {getArtworkUrl(trackData) && (
                               <img
                                 src={getArtworkUrl(trackData)!}
                                 alt={`${trackData.collectionName || ""} cover`}
-                                className="w-8 h-8 rounded-sm object-cover shadow-sm"
+                                className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
                               />
                             )}
                             <span className="truncate">
@@ -386,10 +386,10 @@ function MusicContent() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="w-[100px] text-sm truncate">
                           {trackData.artistName || "Unknown Artist"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="w-[40px] text-right">
                           {trackData?.trackViewUrl && (
                             <a
                               href={trackData.trackViewUrl}
