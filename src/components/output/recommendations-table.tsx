@@ -103,7 +103,7 @@ function RecommendationsTableContent({
                 <TableHead className="w-[30px] text-center">#</TableHead>
                 <TableHead className="w-[180px]">Track</TableHead>
                 <TableHead className="w-[100px]">Artist</TableHead>
-                <TableHead className="w-[40px] text-right"></TableHead>
+                <TableHead className="w-[30px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -164,7 +164,7 @@ function RecommendationsTableContent({
                       <TableCell className="w-[100px] text-sm truncate">
                         {trackData.artistName || "Unknown Artist"}
                       </TableCell>
-                      <TableCell className="w-[40px] text-right">
+                      <TableCell className="w-[30px] text-right">
                         {trackData?.trackViewUrl && (
                           <a
                             href={trackData.trackViewUrl}
