@@ -1,7 +1,7 @@
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import TabsDemo from "@/components/input/tabsdemo";
-import Music from "@/components/output/music";
+import Input from "@/components/input/input";
+import Output from "@/components/output/output";
 import { AuthProvider } from "@/lib/supabase/auth/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -26,10 +26,10 @@ function App() {
 
             <div className="flex justify-center gap-16 w-full">
               <div className="max-w-md">
-                <TabsDemo />
+                <Input />
               </div>
               <div className="max-w-md mt-11 ">
-                <Music />
+                <Output />
               </div>
             </div>
           </div>

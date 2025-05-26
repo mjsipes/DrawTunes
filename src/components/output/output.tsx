@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AudioPlayer } from "./audio-player";
 import { RecommendationsTable } from "./recommendations-table";
 
-export default function MusicRecommendations() {
+export default function Output() {
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [shouldPlay, setShouldPlay] = useState(false);
 
