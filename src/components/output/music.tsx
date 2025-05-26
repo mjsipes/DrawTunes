@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { ExternalLink, Music, SkipForward, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
 
 import {
   Table,
@@ -44,160 +43,15 @@ interface Recommendation {
 }
 
 export default function MusicRecommendations() {
-  const [loading, setLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const user = useAuth();
 
-  const supabase = createClient();
-
-  // Fetch most recent drawing ID whenever user changes
-  useEffect(() => {
-    const fetchMostRecentDrawing = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("drawings")
-          .select("drawing_id, ai_message")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (error) {
-          console.error("Error fetching most recent drawing:", error);
-        } else if (data && data.length > 0) {
-          setActiveDrawingId(data[0].drawing_id);
-          console.log(data[0].ai_message);
-        }
-      } catch (err) {
-        console.error("Error in fetchMostRecentDrawing:", err);
-      }
-    };
-
-    fetchMostRecentDrawing();
-
-    // Subscribe to changes in the drawings table for this user
-    if (user?.id) {
-      const channel = supabase
-        .channel("drawings-latest-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "drawings",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log("New drawing inserted:", payload);
-            if (payload.new && payload.new.drawing_id) {
-              setActiveDrawingId(payload.new.drawing_id);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
-
-  // Fetch recommendations for the active drawing
-  useEffect(() => {
-    const debouncedFetchRecommendations = (() => {
-      let timeout: NodeJS.Timeout;
-      return () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          fetchRecommendations();
-        }, 200);
-      };
-    })();
-
-    const fetchRecommendations = async () => {
-      if (!activeDrawingId) return;
-
-      setLoading(true);
-
-      try {
-        const { data, error } = await supabase
-          .from("recommendations")
-          .select(
-            `
-            id,
-            drawing_id,
-            songs:song_id (
-              id,
-              full_track_data,
-              last_updated
-            )
-          `
-          )
-          .eq("drawing_id", activeDrawingId);
-
-        if (error) {
-          console.error("Error fetching recommendations:", error);
-        } else if (data) {
-          console.log(
-            "Fetched recommendations for drawing:",
-            activeDrawingId,
-            data
-          );
-          const formattedRecommendations: Recommendation[] = data.map(
-            (item: any) => ({
-              id: item.id,
-              drawing_id: item.drawing_id,
-              song: item.songs,
-            })
-          );
-
-          setRecommendations(formattedRecommendations);
-
-          // Reset audio state when recommendations change
-          setCurrentSongIndex(null);
-          setIsPlaying(false);
-          stopAudio();
-        }
-      } catch (err) {
-        console.error("Error in fetchRecommendations:", err);
-      }
-
-      setLoading(false);
-    };
-
-    debouncedFetchRecommendations();
-
-    // Subscribe to new recommendations for this drawing
-    if (activeDrawingId) {
-      const channel = supabase
-        .channel("recommendations-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "recommendations",
-            filter: `drawing_id=eq.${activeDrawingId}`,
-          },
-          (payload) => {
-            console.log("New recommendation received:", payload);
-            debouncedFetchRecommendations();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [activeDrawingId]);
+  // Use custom hooks for data fetching
+  const activeDrawingId = useMostRecentDrawing();
+  const { recommendations, loading } = useRecommendations(activeDrawingId);
 
   // Audio player functions
   const playFirstSong = () => {
