@@ -26,10 +26,6 @@ interface Recommendation {
     song: Song;
 }
 
-// Cache for promises to prevent duplicate requests
-const drawingCache = new Map<string, Promise<any>>();
-const recommendationsCache = new Map<string, Promise<any>>();
-
 export function useMostRecentDrawing() {
     const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
     const user = useAuth();
@@ -140,6 +136,7 @@ export function useRecommendations(activeDrawingId: string | null) {
 
         fetchRecommendations();
 
+        
         if (activeDrawingId) {
             const channel = supabase
                 .channel("recommendations-channel")
