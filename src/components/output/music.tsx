@@ -40,179 +40,6 @@ interface Recommendation {
   song: Song;
 }
 
-export default function MusicRecommendations() {
-  const [loading, setLoading] = useState(true);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
-  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const user = useAuth();
-
-  const supabase = createClient();
-
-  // Fetch most recent drawing ID whenever user changes
-  useEffect(() => {
-    const fetchMostRecentDrawing = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from("drawings")
-          .select("drawing_id, ai_message")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        if (error) {
-          console.error("Error fetching most recent drawing:", error);
-        } else if (data && data.length > 0) {
-          setActiveDrawingId(data[0].drawing_id);
-          console.log(data[0].ai_message);
-        }
-      } catch (err) {
-        console.error("Error in fetchMostRecentDrawing:", err);
-      }
-    };
-
-    fetchMostRecentDrawing();
-
-    // Subscribe to changes in the drawings table for this user
-    if (user?.id) {
-      const channel = supabase
-        .channel("drawings-latest-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "drawings",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log("New drawing inserted:", payload);
-            if (payload.new && payload.new.drawing_id) {
-              setActiveDrawingId(payload.new.drawing_id);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
-
-  // Fetch recommendations for the active drawing
-  useEffect(() => {
-    const debouncedFetchRecommendations = (() => {
-      let timeout: NodeJS.Timeout;
-      return () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          fetchRecommendations();
-        }, 200);
-      };
-    })();
-
-    const fetchRecommendations = async () => {
-      if (!activeDrawingId) return;
-
-      setLoading(true);
-
-      try {
-        const { data, error } = await supabase
-          .from("recommendations")
-          .select(
-            `
-            id,
-            drawing_id,
-            songs:song_id (
-              id,
-              full_track_data,
-              last_updated
-            )
-          `
-          )
-          .eq("drawing_id", activeDrawingId);
-
-        if (error) {
-          console.error("Error fetching recommendations:", error);
-        } else if (data) {
-          console.log(
-            "Fetched recommendations for drawing:",
-            activeDrawingId,
-            data
-          );
-          const formattedRecommendations: Recommendation[] = data.map(
-            (item: any) => ({
-              id: item.id,
-              drawing_id: item.drawing_id,
-              song: item.songs,
-            })
-          );
-
-          setRecommendations(formattedRecommendations);
-
-          // Reset audio state when recommendations change
-          setCurrentSongIndex(null);
-          setIsPlaying(false);
-          stopAudio();
-        }
-      } catch (err) {
-        console.error("Error in fetchRecommendations:", err);
-      }
-
-      setLoading(false);
-    };
-
-    debouncedFetchRecommendations();
-
-    // Subscribe to new recommendations for this drawing
-    if (activeDrawingId) {
-      const channel = supabase
-        .channel("recommendations-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "recommendations",
-            filter: `drawing_id=eq.${activeDrawingId}`,
-          },
-          (payload) => {
-            console.log("New recommendation received:", payload);
-            debouncedFetchRecommendations();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [activeDrawingId]);
-
-  // Audio player functions
-  const playFirstSong = () => {
-    if (recommendations.length > 0) {
-      playSong(0);
-    }
-  };
-
-  // Helper to get track URL from iTunes data structure
-  const getTrackAudioUrl = (song: iTunesTrack): string | null => {
-    // iTunes API provides previewUrl directly
-    if (song?.previewUrl) {
-      return song.previewUrl;
-    }
-
-    return null;
-  };
-
 // Helper to get artwork URL with higher resolution
 const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
@@ -224,6 +51,46 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   }
   return null;
 };
+
+const RecommendationsSkeleton = () => (
+  <Card>
+    <CardContent className="p-0">
+      <ScrollArea className="h-[280px]">
+        <Table className="border-collapse">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[40px] text-center">#</TableHead>
+              <TableHead className="w-[200px]">Track</TableHead>
+              <TableHead className="w-[130px]">Artist</TableHead>
+              <TableHead className="w-[40px] text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell className="text-center">
+                  <Skeleton className="h-4 w-4 mx-auto" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-8 h-8 rounded-sm" />
+                    <Skeleton className="h-4 w-[130px]" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-4 ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
+    </CardContent>
+  </Card>
+);
 
 // Main component content without loading state
 function MusicContent() {
@@ -253,71 +120,12 @@ function MusicContent() {
 
   return (
     <div className="w-[450px]">
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-2">
-            {/* Current playing info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {currentSong ? (
-                  <>
-                    {getArtworkUrl(currentSong) ? (
-                      <img
-                        src={getArtworkUrl(currentSong)!}
-                        alt={`${currentSong.collectionName || ""} cover`}
-                        className="w-10 h-10 rounded-md object-cover shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center">
-                        <Music size={20} className="text-slate-400" />
-                      </div>
-                    )}
-                    <div className="overflow-hidden">
-                      <p className="font-medium text-sm truncate">
-                        {currentSong.trackName}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {currentSong.artistName || "Unknown Artist"}
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Music size={20} className="text-slate-400" />
-                    <span className="text-sm text-gray-500">
-                      {recommendations.length > 0
-                        ? "Select a song to play"
-                        : "No tracks available"}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handlePlayPause}
-                  disabled={recommendations.length === 0}
-                >
-                  {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSkipSong}
-                  disabled={recommendations.length === 0}
-                >
-                  <SkipForward size={18} />
-                </Button>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <Progress value={progress} className="h-1 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <AudioPlayer
+        currentSong={currentSong}
+        onSkip={handleSkipSong}
+        recommendationsLength={recommendations.length}
+        shouldPlay={shouldPlay}
+      />
 
       <Card>
         <CardContent className="p-0">
@@ -338,17 +146,10 @@ function MusicContent() {
                       <div className="flex flex-col items-center gap-2">
                         <Music size={32} className="text-slate-400" />
                         {activeDrawingId ? (
-                          aiMessage ? (
-                            <div className="text-center text-sm mt-4 max-w-[350px] mx-auto">
-                              <p className="font-medium mb-2">AI Analysis:</p>
-                              <p className="text-slate-600">{aiMessage}</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-2 mt-10">
-                              <Skeleton className="h-4 w-[350px]" />
-                              <Skeleton className="h-4 w-[250px]" />
-                            </div>
-                          )
+                          <div className="space-y-2 mt-10">
+                            <Skeleton className="h-4 w-[350px]" />
+                            <Skeleton className="h-4 w-[250px]" />
+                          </div>
                         ) : (
                           <span>No music recommendations yet</span>
                         )}
