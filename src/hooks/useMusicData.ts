@@ -136,6 +136,7 @@ export function useRecommendations(activeDrawingId: string | null) {
 
         fetchRecommendations();
 
+        
         if (activeDrawingId) {
             const channel = supabase
                 .channel("recommendations-channel")
