@@ -1,13 +1,10 @@
-import { useState, useEffect, useRef } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { ExternalLink, Music, SkipForward, Pause, Play } from "lucide-react";
+import { useState, Suspense } from "react";
+import { ExternalLink, Music } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/lib/supabase/auth/AuthProvider";
-import Loading from "@/components/output/loading";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import { AudioPlayer, AudioPlayerSkeleton } from "./audio-player";
 
 import {
   Table,
@@ -47,7 +44,6 @@ export default function MusicRecommendations() {
   const [loading, setLoading] = useState(true);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
-  const [aiMessage, setAiMessage] = useState<string | null>(null);
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -74,11 +70,7 @@ export default function MusicRecommendations() {
           console.error("Error fetching most recent drawing:", error);
         } else if (data && data.length > 0) {
           setActiveDrawingId(data[0].drawing_id);
-          setAiMessage(data[0].ai_message);
-          console.log(
-            "AI Message for most recent drawing:",
-            data[0].ai_message
-          );
+          console.log(data[0].ai_message);
         }
       } catch (err) {
         console.error("Error in fetchMostRecentDrawing:", err);
@@ -99,34 +91,10 @@ export default function MusicRecommendations() {
             table: "drawings",
             filter: `user_id=eq.${user.id}`,
           },
-          async (payload) => {
+          (payload) => {
             console.log("New drawing inserted:", payload);
             if (payload.new && payload.new.drawing_id) {
               setActiveDrawingId(payload.new.drawing_id);
-
-              // Fetch the AI message for the new drawing
-              try {
-                const { data, error } = await supabase
-                  .from("drawings")
-                  .select("ai_message")
-                  .eq("drawing_id", payload.new.drawing_id)
-                  .single();
-
-                if (error) {
-                  console.error(
-                    "Error fetching AI message for new drawing:",
-                    error
-                  );
-                } else if (data) {
-                  setAiMessage(data.ai_message);
-                  console.log("AI Message for new drawing:", data.ai_message);
-                }
-              } catch (err) {
-                console.error(
-                  "Error fetching AI message for new drawing:",
-                  err
-                );
-              }
             }
           }
         )
@@ -245,149 +213,39 @@ export default function MusicRecommendations() {
     return null;
   };
 
-  // Helper to get artwork URL with higher resolution
-  const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
-    const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
-    if (song?.[artworkKey]) {
-      // Convert to higher resolution by replacing the size in the URL
-      return (song[artworkKey] as string).replace(
-        `${size}x${size}bb.jpg`,
-        "300x300bb.jpg"
-      );
-    }
-    return null;
-  };
-
-  const playSong = (index: number) => {
-    if (index >= recommendations.length) return;
-
-    // Stop any currently playing audio
-    stopAudio();
-
-    setCurrentSongIndex(index);
-    const song = recommendations[index]?.song?.full_track_data;
-
-    // Get appropriate audio URL for this track
-    const audioUrl = getTrackAudioUrl(song);
-
-    if (audioUrl) {
-      audioRef.current = new Audio(audioUrl);
-
-      // Set up audio event listeners
-      audioRef.current.addEventListener("ended", handleSongEnd);
-      audioRef.current.addEventListener("error", () => {
-        console.error("Error playing audio");
-        handleSkipSong();
-      });
-
-      audioRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          startProgressTracking();
-        })
-        .catch((err: Error) => {
-          console.error("Playback failed:", err);
-          handleSkipSong();
-        });
-    } else {
-      // If no URL available, we'll just "mark" this track as playing
-      // but won't actually play audio - just for UI purposes
-      setIsPlaying(true);
-
-      // Auto-advance after a few seconds if no audio available
-      setTimeout(() => {
-        handleSkipSong();
-      }, 5000);
-    }
-  };
-
-  const startProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const value =
-          (audioRef.current.currentTime / audioRef.current.duration) * 100;
-        setProgress(isNaN(value) ? 0 : value);
-      }
-    }, 500);
-  };
-
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.removeEventListener("ended", handleSongEnd);
-      audioRef.current = null;
-    }
-
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-
-    setProgress(0);
-  };
-
-  const handlePlayPause = () => {
-    if (
-      !audioRef.current &&
-      currentSongIndex === null &&
-      recommendations.length > 0
-    ) {
-      // Start playing first song if nothing is playing
-      playFirstSong();
-      return;
-    }
-
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-        }
-      } else {
-        audioRef.current.play();
-        startProgressTracking();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleSkipSong = () => {
-    // Get current index or default to 0 if nothing is playing
-    const currentIndex = currentSongIndex !== null ? currentSongIndex : 0;
-
-    // Move to next song, wrapping around to beginning if at end
-    const nextIndex = (currentIndex + 1) % recommendations.length;
-
-    // Play the next song
-    playSong(nextIndex);
-  };
-
-  const handleSongEnd = () => {
-    // When song ends naturally, move to next song
-    handleSkipSong();
-  };
-
-  // Cleanup audio on component unmount
-  useEffect(() => {
-    return () => {
-      stopAudio();
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="w-[450px] h-[360px]">
-        <Loading />
-      </div>
+// Helper to get artwork URL with higher resolution
+const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
+  const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
+  if (song?.[artworkKey]) {
+    return (song[artworkKey] as string).replace(
+      `${size}x${size}bb.jpg`,
+      "300x300bb.jpg"
     );
   }
+  return null;
+};
 
-  // Get current song
+// Main component content without loading state
+function MusicContent() {
+  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
+  const [shouldPlay, setShouldPlay] = useState(false);
+
+  // Use custom hooks for data fetching
+  const activeDrawingId = useMostRecentDrawing();
+  const { recommendations } = useRecommendations(activeDrawingId);
+
+  const handleSkipSong = () => {
+    const currentIndex = currentSongIndex !== null ? currentSongIndex : 0;
+    const nextIndex = (currentIndex + 1) % recommendations.length;
+    setCurrentSongIndex(nextIndex);
+    setShouldPlay(true);
+  };
+
+  const handleSongSelect = (index: number) => {
+    setCurrentSongIndex(index);
+    setShouldPlay(true);
+  };
+
   const currentSong =
     currentSongIndex !== null
       ? recommendations[currentSongIndex]?.song?.full_track_data
@@ -461,28 +319,16 @@ export default function MusicRecommendations() {
         </CardContent>
       </Card>
 
-      {/* AI Message Card */}
-      {aiMessage && (
-        <Card className="mb-4">
-          <CardContent className="">
-            <div className="text-sm">
-              <p className="font-medium mb-1">AI Analysis:</p>
-              <p className="text-slate-600">{aiMessage}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardContent className="p-0">
           <ScrollArea className="h-[280px]">
-            <Table className="border-collapse">
+            <Table className="border-collapse table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px] text-center">#</TableHead>
+                  <TableHead className="w-[30px] text-center">#</TableHead>
                   <TableHead className="w-[180px]">Track</TableHead>
-                  <TableHead>Artist</TableHead>
-                  <TableHead className="w-[80px] text-right">Action</TableHead>
+                  <TableHead className="w-[100px]">Artist</TableHead>
+                  <TableHead className="w-[40px] text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -522,9 +368,9 @@ export default function MusicRecommendations() {
                         className={`cursor-pointer hover:bg-slate-50 ${
                           isCurrentSong ? "bg-slate-100" : ""
                         }`}
-                        onClick={() => playSong(index)}
+                        onClick={() => handleSongSelect(index)}
                       >
-                        <TableCell className="text-center text-sm">
+                        <TableCell className="w-[30px] text-center text-sm">
                           {isCurrentSong ? (
                             <div className="flex justify-center">
                               <Music size={16} className="text-blue-500" />
@@ -533,13 +379,13 @@ export default function MusicRecommendations() {
                             index + 1
                           )}
                         </TableCell>
-                        <TableCell className="font-medium text-sm">
+                        <TableCell className="w-[180px] font-medium text-sm">
                           <div className="flex items-center gap-2">
                             {getArtworkUrl(trackData) && (
                               <img
                                 src={getArtworkUrl(trackData)!}
                                 alt={`${trackData.collectionName || ""} cover`}
-                                className="w-8 h-8 rounded-sm object-cover shadow-sm"
+                                className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
                               />
                             )}
                             <span className="truncate">
@@ -547,10 +393,10 @@ export default function MusicRecommendations() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm">
+                        <TableCell className="w-[100px] text-sm truncate">
                           {trackData.artistName || "Unknown Artist"}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="w-[40px] text-right">
                           {trackData?.trackViewUrl && (
                             <a
                               href={trackData.trackViewUrl}
@@ -573,5 +419,21 @@ export default function MusicRecommendations() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Main component with Suspense
+export default function MusicRecommendations() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-[450px]">
+          <AudioPlayerSkeleton />
+          <RecommendationsSkeleton />
+        </div>
+      }
+    >
+      <MusicContent />
+    </Suspense>
   );
 }
