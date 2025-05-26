@@ -1,5 +1,7 @@
 import { Suspense } from "react";
-import { Music, ExternalLink } from "lucide-react";
+import { Music } from "lucide-react";
+import { FaApple } from "react-icons/fa";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,9 +26,6 @@ interface iTunesTrack {
   artworkUrl100?: string;
   trackViewUrl?: string;
 }
-
-
-
 
 interface RecommendationsTableProps {
   currentSongIndex: number | null;
@@ -104,7 +103,7 @@ function RecommendationsTableContent({
                 <TableHead className="w-[30px] text-center">#</TableHead>
                 <TableHead className="w-[180px]">Track</TableHead>
                 <TableHead className="w-[100px]">Artist</TableHead>
-                <TableHead className="w-[40px] text-right">Action</TableHead>
+                <TableHead className="w-[40px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -172,9 +171,9 @@ function RecommendationsTableContent({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="text-blue-500 hover:underline"
+                            className="text-red-500 hover:underline"
                           >
-                            <ExternalLink size={16} />
+                            <FaApple size={16} />
                           </a>
                         )}
                       </TableCell>
