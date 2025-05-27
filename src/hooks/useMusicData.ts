@@ -2,17 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import { useEffect } from "react";
 
-interface iTunesTrack {
-    trackId: number;
-    trackName: string;
-    artistName: string;
-    collectionName: string;
-    previewUrl?: string;
-    artworkUrl30?: string;
-    artworkUrl60?: string;
-    artworkUrl100?: string;
-    trackViewUrl?: string;
-}
+
 
 // Create a cache for our resources
 const resourceCache = new Map();
