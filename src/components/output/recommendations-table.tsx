@@ -121,17 +121,12 @@ function RecommendationsTableContent({
             <TableBody>
               {recommendations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={4} className="text-center py-10">
                     <div className="flex flex-col items-center gap-2">
-                      <Music size={32} className="text-slate-400" />
-                      {activeDrawingId ? (
-                        <div className="space-y-2 mt-10">
-                          <Skeleton className="h-4 w-[350px]" />
-                          <Skeleton className="h-4 w-[250px]" />
-                        </div>
-                      ) : (
-                        <span>No music recommendations yet</span>
-                      )}
+                      <Music size={28} className="text-blue-400" />
+                      <span className="text-slate-500">
+                        No music recommendations yet
+                      </span>
                     </div>
                   </TableCell>
                 </TableRow>
