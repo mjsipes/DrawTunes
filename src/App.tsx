@@ -34,7 +34,7 @@ function App() {
                 <div className="max-w-md">
                   <Input />
                 </div>
-                <div className="max-w-md mt-11 ">
+                <div className="max-w-md ">
                   <Output />
                 </div>
               </div>
