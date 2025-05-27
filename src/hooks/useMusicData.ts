@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface iTunesTrack {
     trackId: number;
@@ -18,12 +18,6 @@ interface Song {
     id: string;
     full_track_data: iTunesTrack;
     last_updated: string | null;
-}
-
-interface Recommendation {
-    id: string;
-    drawing_id: string;
-    song: Song;
 }
 
 // Create a cache for our resources
