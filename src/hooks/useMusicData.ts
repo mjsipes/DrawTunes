@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
+import { useEffect, useState } from "react";
 
 interface iTunesTrack {
     trackId: number;
@@ -17,7 +17,7 @@ interface iTunesTrack {
 interface Song {
     id: string;
     full_track_data: iTunesTrack;
-    last_updated: string;
+    last_updated: string | null;
 }
 
 interface Recommendation {
@@ -26,36 +26,72 @@ interface Recommendation {
     song: Song;
 }
 
+// Create a cache for our resources
+const resourceCache = new Map();
+
+// Helper to create a resource
+function createResource(asyncFn: () => Promise<any>) {
+    let status = "pending";
+    let result: any;
+    let suspender = asyncFn().then(
+        (r) => {
+            status = "success";
+            result = r;
+        },
+        (e) => {
+            status = "error";
+            result = e;
+        },
+    );
+
+    return {
+        read() {
+            if (status === "pending") {
+                throw suspender;
+            } else if (status === "error") {
+                throw result;
+            } else if (status === "success") {
+                return result;
+            }
+        },
+    };
+}
+
+// Helper to get or create a resource
+function getResource(key: string, asyncFn: () => Promise<any>) {
+    if (!resourceCache.has(key)) {
+        resourceCache.set(key, createResource(asyncFn));
+    }
+    return resourceCache.get(key);
+}
+
 export function useMostRecentDrawing() {
-    const [activeDrawingId, setActiveDrawingId] = useState<string | null>(null);
     const user = useAuth();
     const supabase = createClient();
 
-    useEffect(() => {
-        const fetchMostRecentDrawing = async () => {
-            if (!user?.id) return;
+    const resource = getResource(
+        `mostRecentDrawing-${user?.id}`,
+        async () => {
+            if (!user?.id) return null;
 
-            try {
-                const { data, error } = await supabase
-                    .from("drawings")
-                    .select("drawing_id, ai_message")
-                    .eq("user_id", user.id)
-                    .order("created_at", { ascending: false })
-                    .limit(1);
+            const { data, error } = await supabase
+                .from("drawings")
+                .select("drawing_id, ai_message")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(1);
 
-                if (error) {
-                    console.error("Error fetching most recent drawing:", error);
-                } else if (data && data.length > 0) {
-                    setActiveDrawingId(data[0].drawing_id);
-                    console.log(data[0].ai_message);
-                }
-            } catch (err) {
-                console.error("Error in fetchMostRecentDrawing:", err);
+            if (error) {
+                console.error("Error fetching most recent drawing:", error);
+                return null;
             }
-        };
 
-        fetchMostRecentDrawing();
+            return data && data.length > 0 ? data[0].drawing_id : null;
+        },
+    );
 
+    // Set up realtime subscription
+    useEffect(() => {
         if (user?.id) {
             const channel = supabase
                 .channel("drawings-latest-channel")
@@ -68,9 +104,11 @@ export function useMostRecentDrawing() {
                         filter: `user_id=eq.${user.id}`,
                     },
                     (payload) => {
-                        console.log("New drawing inserted:", payload);
                         if (payload.new && payload.new.drawing_id) {
-                            setActiveDrawingId(payload.new.drawing_id);
+                            // Invalidate the cache when new data arrives
+                            resourceCache.delete(
+                                `mostRecentDrawing-${user.id}`,
+                            );
                         }
                     },
                 )
@@ -82,24 +120,21 @@ export function useMostRecentDrawing() {
         }
     }, [user?.id]);
 
-    return activeDrawingId;
+    return resource.read();
 }
 
 export function useRecommendations(activeDrawingId: string | null) {
-    const [recommendations, setRecommendations] = useState<Recommendation[]>(
-        [],
-    );
     const supabase = createClient();
 
-    useEffect(() => {
-        const fetchRecommendations = async () => {
-            if (!activeDrawingId) return;
+    const resource = getResource(
+        `recommendations-${activeDrawingId}`,
+        async () => {
+            if (!activeDrawingId) return [];
 
-            try {
-                const { data, error } = await supabase
-                    .from("recommendations")
-                    .select(
-                        `
+            const { data, error } = await supabase
+                .from("recommendations")
+                .select(
+                    `
             id,
             drawing_id,
             songs:song_id (
@@ -108,35 +143,24 @@ export function useRecommendations(activeDrawingId: string | null) {
               last_updated
             )
           `,
-                    )
-                    .eq("drawing_id", activeDrawingId);
+                )
+                .eq("drawing_id", activeDrawingId);
 
-                if (error) {
-                    console.error("Error fetching recommendations:", error);
-                } else if (data) {
-                    console.log(
-                        "Fetched recommendations for drawing:",
-                        activeDrawingId,
-                        data,
-                    );
-                    const formattedRecommendations: Recommendation[] = data.map(
-                        (item: any) => ({
-                            id: item.id,
-                            drawing_id: item.drawing_id,
-                            song: item.songs,
-                        }),
-                    );
-
-                    setRecommendations(formattedRecommendations);
-                }
-            } catch (err) {
-                console.error("Error in fetchRecommendations:", err);
+            if (error) {
+                console.error("Error fetching recommendations:", error);
+                return [];
             }
-        };
 
-        fetchRecommendations();
+            return data.map((item: any) => ({
+                id: item.id,
+                drawing_id: item.drawing_id,
+                song: item.songs,
+            }));
+        },
+    );
 
-        
+    // Set up realtime subscription
+    useEffect(() => {
         if (activeDrawingId) {
             const channel = supabase
                 .channel("recommendations-channel")
@@ -148,9 +172,11 @@ export function useRecommendations(activeDrawingId: string | null) {
                         table: "recommendations",
                         filter: `drawing_id=eq.${activeDrawingId}`,
                     },
-                    (payload) => {
-                        console.log("New recommendation received:", payload);
-                        fetchRecommendations();
+                    () => {
+                        // Invalidate the cache when new data arrives
+                        resourceCache.delete(
+                            `recommendations-${activeDrawingId}`,
+                        );
                     },
                 )
                 .subscribe();
@@ -161,5 +187,5 @@ export function useRecommendations(activeDrawingId: string | null) {
         }
     }, [activeDrawingId]);
 
-    return { recommendations };
+    return { recommendations: resource.read() };
 }

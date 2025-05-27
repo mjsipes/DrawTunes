@@ -27,6 +27,16 @@ interface iTunesTrack {
   trackViewUrl?: string;
 }
 
+interface Recommendation {
+  id: string;
+  drawing_id: string;
+  song: {
+    id: string;
+    full_track_data: iTunesTrack;
+    last_updated: string | null;
+  };
+}
+
 interface RecommendationsTableProps {
   currentSongIndex: number | null;
   onSongSelect: (index: number) => void;
@@ -49,13 +59,13 @@ function RecommendationsSkeleton() {
     <Card>
       <CardContent className="p-0">
         <ScrollArea className="h-[280px]">
-          <Table className="border-collapse">
+          <Table className="border-collapse table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40px] text-center">#</TableHead>
-                <TableHead className="w-[200px]">Track</TableHead>
-                <TableHead className="w-[130px]">Artist</TableHead>
-                <TableHead className="w-[40px] text-right">Action</TableHead>
+                <TableHead className="w-[30px] text-center">#</TableHead>
+                <TableHead className="w-[180px]">Track</TableHead>
+                <TableHead className="w-[100px]">Artist</TableHead>
+                <TableHead className="w-[30px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -74,7 +84,9 @@ function RecommendationsSkeleton() {
                     <Skeleton className="h-4 w-[100px]" />
                   </TableCell>
                   <TableCell className="text-right">
-                    <Skeleton className="h-4 w-4 ml-auto" />
+                    <div className="flex justify-end pr-2">
+                      <Skeleton className="h-4 w-4" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -124,7 +136,7 @@ function RecommendationsTableContent({
                   </TableCell>
                 </TableRow>
               ) : (
-                recommendations.map((rec, index) => {
+                recommendations.map((rec: Recommendation, index: number) => {
                   const trackData = rec.song?.full_track_data;
                   if (!trackData) return null;
 
@@ -166,15 +178,17 @@ function RecommendationsTableContent({
                       </TableCell>
                       <TableCell className="w-[30px] text-right">
                         {trackData?.trackViewUrl && (
-                          <a
-                            href={trackData.trackViewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-red-500 hover:underline"
-                          >
-                            <FaApple size={16} />
-                          </a>
+                          <div className="flex justify-end pr-2">
+                            <a
+                              href={trackData.trackViewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-red-500 hover:underline"
+                            >
+                              <FaApple size={16} />
+                            </a>
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
