@@ -108,7 +108,7 @@ function RecommendationsTableContent({
   );
 
   return (
-    <Card>
+    <Card className="py-0">
       <CardContent className="p-0">
         {/* <ScrollArea className="h-[280px]"> */}
         <Table className="border-collapse table-fixed w-full">
