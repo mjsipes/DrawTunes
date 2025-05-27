@@ -31,11 +31,11 @@ export function useMostRecentDrawing() {
                 return;
             }
 
+            console.log("mostRecentDrawing: ", data);
+
             setMostRecentDrawing(
                 data && data.length > 0 ? data[0] : null,
             );
-            console.log("mostRecentDrawing", mostRecentDrawing);
-            console.log("ai_message", data[0]?.ai_message);
         }
 
         fetchMostRecentDrawing();
@@ -53,6 +53,10 @@ export function useMostRecentDrawing() {
                         filter: `user_id=eq.${user.id}`,
                     },
                     (payload) => {
+                        console.log(
+                            "drawing subscription triggered: ",
+                            payload,
+                        );
                         if (payload.new) {
                             setMostRecentDrawing(
                                 payload.new as Tables<"drawings">,
@@ -103,6 +107,7 @@ export function useRecommendations(activeDrawingId: string | null) {
                 console.error("Error fetching recommendations:", error);
                 return;
             }
+            console.log("fetched recommendations: ", data);
 
             setRecommendations(data.map((item: any) => ({
                 id: item.id,
@@ -127,6 +132,10 @@ export function useRecommendations(activeDrawingId: string | null) {
                     },
                     (payload) => {
                         if (payload.new) {
+                            console.log(
+                                "recommendation subscription triggered: ",
+                                payload,
+                            );
                             fetchRecommendations(); // Refetch all recommendations when new one is added
                         }
                     },
