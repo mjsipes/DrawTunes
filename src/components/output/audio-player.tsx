@@ -5,25 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {
   currentSongIndex: number | null;
   onSkip: () => void;
   shouldPlay: boolean;
+  className?: string;
 }
 
-function AudioPlayerSkeleton() {
+function AudioPlayerSkeleton({ className }: { className?: string }) {
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4">
+    <Card className={cn(className)}>
+      <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 w-[280px]">
               <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
                 <Music size={20} className="text-slate-400" />
               </div>
-              <div className="min-w-0">
-                <Skeleton className="h-4 w-[130px]" />
+              <div className="min-w-0 space-y-1">
+                <Skeleton className="h-4 w-[140px]" />
+                <Skeleton className="h-4 w-[100px]" />
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -42,14 +45,17 @@ function AudioPlayerContent({
   currentSongIndex,
   onSkip,
   shouldPlay,
+  className,
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeDrawingId = useMostRecentDrawing();
-  const { recommendations } = useRecommendations(activeDrawingId);
+  const mostRecentDrawing = useMostRecentDrawing();
+  const { recommendations } = useRecommendations(
+    mostRecentDrawing?.drawing_id ?? null
+  );
 
   const currentSong =
     currentSongIndex !== null
@@ -152,50 +158,12 @@ function AudioPlayerContent({
   }, [currentSong, shouldPlay]);
 
   if (!currentSong) {
-    return (
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 w-[280px]">
-                <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
-                  <Music size={20} className="text-slate-400" />
-                </div>
-                <span className="text-sm text-gray-500">
-                  {recommendations.length > 0
-                    ? "Select a song to play"
-                    : "No tracks available"}
-                </span>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-md"
-                  disabled
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-md"
-                  disabled
-                >
-                  <SkipForward className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <Progress value={0} className="h-1 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <AudioPlayerSkeleton className={className} />;
   }
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4">
+    <Card className={cn(className)}>
+      <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 w-[280px]">
@@ -254,7 +222,7 @@ function AudioPlayerContent({
 
 export function AudioPlayer(props: AudioPlayerProps) {
   return (
-    <Suspense fallback={<AudioPlayerSkeleton />}>
+    <Suspense fallback={<AudioPlayerSkeleton className={props.className} />}>
       <AudioPlayerContent {...props} />
     </Suspense>
   );
