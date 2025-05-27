@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { AudioPlayer } from "./audio-player";
 import { RecommendationsTable } from "./recommendations-table";
+import { AISummary } from "./ai-summary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Output() {
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
@@ -21,11 +23,23 @@ export default function Output() {
 
   return (
     <div className="w-[450px] space-y-4">
-      <AudioPlayer
-        currentSongIndex={currentSongIndex}
-        onSkip={handleSkipSong}
-        shouldPlay={shouldPlay}
-      />
+      <Tabs defaultValue="audio">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="audio">Audio</TabsTrigger>
+          <TabsTrigger value="summary">AI Summary</TabsTrigger>
+        </TabsList>
+        <TabsContent value="audio">
+          <AudioPlayer
+            currentSongIndex={currentSongIndex}
+            onSkip={handleSkipSong}
+            shouldPlay={shouldPlay}
+          />
+        </TabsContent>
+        <TabsContent value="summary">
+          <AISummary />
+        </TabsContent>
+      </Tabs>
+
       <RecommendationsTable
         currentSongIndex={currentSongIndex}
         onSongSelect={handleSongSelect}

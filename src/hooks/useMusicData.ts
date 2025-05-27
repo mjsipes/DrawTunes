@@ -1,22 +1,22 @@
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
 /**
- * Hook that fetches and tracks the most recent drawing data for the current user.
- * Sets up realtime subscription to update when new drawings are created.
+ * Hook that fetches and tracks the current drawing data for the current user.
+ * Sets up realtime subscription to update when the current drawing is modified or a new one is created and becomes the current one.
  * Returns the entire drawing data row or null if none exists.
  */
-export function useMostRecentDrawing() {
+export function useCurrentDrawing() {
     const user = useAuth();
     const supabase = createClient();
-    const [mostRecentDrawing, setMostRecentDrawing] = useState<
+    const [currentDrawing, setCurrentDrawing] = useState<
         Tables<"drawings"> | null
     >(null);
 
     useEffect(() => {
-        async function fetchMostRecentDrawing() {
+        async function fetchcurrentDrawing() {
             if (!user?.id) return;
 
             const { data, error } = await supabase
@@ -31,14 +31,14 @@ export function useMostRecentDrawing() {
                 return;
             }
 
-            setMostRecentDrawing(
+            console.log("currentDrawing: ", data);
+
+            setCurrentDrawing(
                 data && data.length > 0 ? data[0] : null,
             );
-            console.log("mostRecentDrawing", mostRecentDrawing);
-            console.log("ai_message", data[0]?.ai_message);
         }
 
-        fetchMostRecentDrawing();
+        fetchcurrentDrawing();
 
         // Set up realtime subscription
         if (user?.id) {
@@ -53,8 +53,12 @@ export function useMostRecentDrawing() {
                         filter: `user_id=eq.${user.id}`,
                     },
                     (payload) => {
+                        console.log(
+                            "drawing subscription triggered: ",
+                            payload,
+                        );
                         if (payload.new) {
-                            setMostRecentDrawing(
+                            setCurrentDrawing(
                                 payload.new as Tables<"drawings">,
                             );
                         }
@@ -68,7 +72,7 @@ export function useMostRecentDrawing() {
         }
     }, [user?.id]);
 
-    return mostRecentDrawing;
+    return currentDrawing;
 }
 
 /**
@@ -79,6 +83,7 @@ export function useMostRecentDrawing() {
 export function useRecommendations(activeDrawingId: string | null) {
     const supabase = createClient();
     const [recommendations, setRecommendations] = useState<any[]>([]);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         async function fetchRecommendations() {
@@ -103,6 +108,7 @@ export function useRecommendations(activeDrawingId: string | null) {
                 console.error("Error fetching recommendations:", error);
                 return;
             }
+            console.log("fetched recommendations: ", data);
 
             setRecommendations(data.map((item: any) => ({
                 id: item.id,
@@ -127,7 +133,18 @@ export function useRecommendations(activeDrawingId: string | null) {
                     },
                     (payload) => {
                         if (payload.new) {
-                            fetchRecommendations(); // Refetch all recommendations when new one is added
+                            console.log(
+                                "recommendation subscription triggered: ",
+                                payload,
+                            );
+                            // Clear any existing timer
+                            if (debounceTimer.current) {
+                                clearTimeout(debounceTimer.current);
+                            }
+                            // Set a new timer to fetch after 500ms
+                            debounceTimer.current = setTimeout(() => {
+                                fetchRecommendations();
+                            }, 500);
                         }
                     },
                 )
@@ -135,6 +152,10 @@ export function useRecommendations(activeDrawingId: string | null) {
 
             return () => {
                 supabase.removeChannel(channel);
+                // Clear the timer on cleanup
+                if (debounceTimer.current) {
+                    clearTimeout(debounceTimer.current);
+                }
             };
         }
     }, [activeDrawingId]);
