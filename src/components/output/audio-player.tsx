@@ -52,8 +52,10 @@ function AudioPlayerContent({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeDrawingId = useMostRecentDrawing();
-  const { recommendations } = useRecommendations(activeDrawingId);
+  const mostRecentDrawing = useMostRecentDrawing();
+  const { recommendations } = useRecommendations(
+    mostRecentDrawing?.drawing_id ?? null
+  );
 
   const currentSong =
     currentSongIndex !== null

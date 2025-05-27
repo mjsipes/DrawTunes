@@ -1,13 +1,19 @@
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
 import { useEffect, useState } from "react";
+import type { Tables } from "@/lib/supabase/database.types";
 
+/**
+ * Hook that fetches and tracks the most recent drawing data for the current user.
+ * Sets up realtime subscription to update when new drawings are created.
+ * Returns the entire drawing data row or null if none exists.
+ */
 export function useMostRecentDrawing() {
     const user = useAuth();
     const supabase = createClient();
-    const [mostRecentDrawing, setMostRecentDrawing] = useState<string | null>(
-        null,
-    );
+    const [mostRecentDrawing, setMostRecentDrawing] = useState<
+        Tables<"drawings"> | null
+    >(null);
 
     useEffect(() => {
         async function fetchMostRecentDrawing() {
@@ -15,7 +21,7 @@ export function useMostRecentDrawing() {
 
             const { data, error } = await supabase
                 .from("drawings")
-                .select("drawing_id, ai_message")
+                .select("*")
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false })
                 .limit(1);
@@ -26,8 +32,10 @@ export function useMostRecentDrawing() {
             }
 
             setMostRecentDrawing(
-                data && data.length > 0 ? data[0].drawing_id : null,
+                data && data.length > 0 ? data[0] : null,
             );
+            console.log("mostRecentDrawing", mostRecentDrawing);
+            console.log("ai_message", data[0]?.ai_message);
         }
 
         fetchMostRecentDrawing();
@@ -45,8 +53,10 @@ export function useMostRecentDrawing() {
                         filter: `user_id=eq.${user.id}`,
                     },
                     (payload) => {
-                        if (payload.new && payload.new.drawing_id) {
-                            setMostRecentDrawing(payload.new.drawing_id);
+                        if (payload.new) {
+                            setMostRecentDrawing(
+                                payload.new as Tables<"drawings">,
+                            );
                         }
                     },
                 )
@@ -61,6 +71,11 @@ export function useMostRecentDrawing() {
     return mostRecentDrawing;
 }
 
+/**
+ * Hook that fetches and tracks song recommendations for a given drawing.
+ * Sets up realtime subscription to update when new recommendations are added.
+ * Returns an array of recommendations with associated song data.
+ */
 export function useRecommendations(activeDrawingId: string | null) {
     const supabase = createClient();
     const [recommendations, setRecommendations] = useState<any[]>([]);
