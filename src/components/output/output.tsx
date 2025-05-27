@@ -24,10 +24,12 @@ export default function Output() {
   return (
     <div className="w-[450px] space-y-4">
       <Tabs defaultValue="audio">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="audio">Audio</TabsTrigger>
-          <TabsTrigger value="summary">AI Summary</TabsTrigger>
-        </TabsList>
+        <div className="flex justify-center">
+          <TabsList className="grid grid-cols-2">
+            <TabsTrigger value="audio">Audio Player</TabsTrigger>
+            <TabsTrigger value="summary">AI Summary</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="audio">
           <AudioPlayer
             currentSongIndex={currentSongIndex}
