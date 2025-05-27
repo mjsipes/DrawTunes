@@ -22,8 +22,9 @@ function AudioPlayerSkeleton() {
               <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
                 <Music size={20} className="text-slate-400" />
               </div>
-              <div className="min-w-0">
-                <Skeleton className="h-4 w-[130px]" />
+              <div className="min-w-0 space-y-1">
+                <Skeleton className="h-4 w-[140px]" />
+                <Skeleton className="h-4 w-[100px]" />
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -152,45 +153,7 @@ function AudioPlayerContent({
   }, [currentSong, shouldPlay]);
 
   if (!currentSong) {
-    return (
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 w-[280px]">
-                <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
-                  <Music size={20} className="text-slate-400" />
-                </div>
-                <span className="text-sm text-gray-500">
-                  {recommendations.length > 0
-                    ? "Select a song to play"
-                    : "No tracks available"}
-                </span>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-md"
-                  disabled
-                >
-                  <Play className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 rounded-md"
-                  disabled
-                >
-                  <SkipForward className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <Progress value={0} className="h-1 w-full" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <AudioPlayerSkeleton />;
   }
 
   return (
