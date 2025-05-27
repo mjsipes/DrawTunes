@@ -22,9 +22,8 @@ function AudioPlayerSkeleton() {
               <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
                 <Music size={20} className="text-slate-400" />
               </div>
-              <div className="space-y-2 min-w-0">
+              <div className="min-w-0">
                 <Skeleton className="h-4 w-[130px]" />
-                <Skeleton className="h-3 w-[80px]" />
               </div>
             </div>
             <div className="flex gap-2 flex-shrink-0">
