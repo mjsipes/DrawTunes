@@ -6,7 +6,7 @@ import { AuthProvider } from "@/lib/supabase/auth/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CurrentDrawingProvider } from "@/lib/CurrentDrawingContext";
+import { CurrentDrawingProvider } from "@/contexts/CurrentDrawingContext";
 
 function App() {
   return (

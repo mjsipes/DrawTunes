@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCurrentDrawing,
   useRecommendations,
-} from "@/lib/CurrentDrawingContext";
+} from "@/contexts/CurrentDrawingContext";
 import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {

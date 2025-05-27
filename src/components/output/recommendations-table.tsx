@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   useCurrentDrawing,
   useRecommendations,
-} from "@/lib/CurrentDrawingContext";
+} from "@/contexts/CurrentDrawingContext";
 import {
   Table,
   TableBody,

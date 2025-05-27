@@ -1,4 +1,4 @@
-import { useCurrentDrawing } from "@/lib/CurrentDrawingContext";
+import { useCurrentDrawing } from "@/contexts/CurrentDrawingContext";
 import { CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";

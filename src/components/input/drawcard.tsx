@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
-import { useCurrentDrawing } from "@/lib/CurrentDrawingContext";
+import { useCurrentDrawing } from "@/contexts/CurrentDrawingContext";
 
 export default function DrawCard() {
   const supabase = createClient();
