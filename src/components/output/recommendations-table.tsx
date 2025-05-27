@@ -3,7 +3,7 @@ import { Music } from "lucide-react";
 import { FaApple } from "react-icons/fa";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
 import {
