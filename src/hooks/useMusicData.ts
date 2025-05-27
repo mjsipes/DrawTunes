@@ -6,7 +6,7 @@ import type { Tables } from "@/lib/supabase/database.types";
 /**
  * Hook that fetches and tracks the current drawing data for the current user.
  * Sets up realtime subscription to update when the current drawing is modified or a new one is created and becomes the current one.
- * Returns the entire drawing data row or null if none exists.
+ * Returns the entire drawing data row or null if none exists, plus a function to clear the current drawing.
  */
 export function useCurrentDrawing() {
     const user = useAuth();
@@ -14,6 +14,11 @@ export function useCurrentDrawing() {
     const [currentDrawing, setCurrentDrawing] = useState<
         Tables<"drawings"> | null
     >(null);
+
+    const clearCurrentDrawing = () => {
+        setCurrentDrawing(null);
+        console.log("currentDrawing cleared");
+    };
 
     useEffect(() => {
         async function fetchcurrentDrawing() {
@@ -40,7 +45,6 @@ export function useCurrentDrawing() {
 
         fetchcurrentDrawing();
 
-        // Set up realtime subscription
         if (user?.id) {
             const channel = supabase
                 .channel("drawings-latest-channel")
@@ -72,7 +76,7 @@ export function useCurrentDrawing() {
         }
     }, [user?.id]);
 
-    return currentDrawing;
+    return { currentDrawing, clearCurrentDrawing };
 }
 
 /**

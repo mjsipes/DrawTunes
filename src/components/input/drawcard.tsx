@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
+import { useCurrentDrawing } from "@/lib/CurrentDrawingContext";
 
 export default function DrawCard() {
   const supabase = createClient();
@@ -22,6 +23,7 @@ export default function DrawCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canvasColor, setCanvasColor] = useState("#FFFFFF");
+  const { clearCurrentDrawing, currentDrawing } = useCurrentDrawing();
 
   // Update canvas color when theme changes
   useEffect(() => {
@@ -40,6 +42,9 @@ export default function DrawCard() {
     if (!canvasRef.current) return;
 
     setIsLoading(true);
+    console.log("Before clear - currentDrawing:", currentDrawing);
+    clearCurrentDrawing();
+    console.log("After clear - currentDrawing:", currentDrawing);
     setError(null);
 
     try {

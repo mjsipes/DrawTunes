@@ -4,7 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCurrentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import {
+  useCurrentDrawing,
+  useRecommendations,
+} from "@/lib/CurrentDrawingContext";
 import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {
@@ -52,7 +55,7 @@ function AudioPlayerContent({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const currentDrawing = useCurrentDrawing();
+  const { currentDrawing } = useCurrentDrawing();
   const { recommendations } = useRecommendations(
     currentDrawing?.drawing_id ?? null
   );

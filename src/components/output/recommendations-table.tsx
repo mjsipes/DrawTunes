@@ -5,7 +5,10 @@ import { FaApple } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCurrentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import {
+  useCurrentDrawing,
+  useRecommendations,
+} from "@/lib/CurrentDrawingContext";
 import {
   Table,
   TableBody,
@@ -102,7 +105,7 @@ function RecommendationsTableContent({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
-  const currentDrawing = useCurrentDrawing();
+  const { currentDrawing } = useCurrentDrawing();
   const { recommendations } = useRecommendations(
     currentDrawing?.drawing_id ?? null
   );
