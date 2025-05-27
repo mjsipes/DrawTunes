@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
 /**
- * Hook that fetches and tracks the most recent drawing data for the current user.
- * Sets up realtime subscription to update when new drawings are created.
+ * Hook that fetches and tracks the current drawing data for the current user.
+ * Sets up realtime subscription to update when the current drawing is modified or a new one is created and becomes the current one.
  * Returns the entire drawing data row or null if none exists.
  */
-export function useMostRecentDrawing() {
+export function useCurrentDrawing() {
     const user = useAuth();
     const supabase = createClient();
-    const [mostRecentDrawing, setMostRecentDrawing] = useState<
+    const [currentDrawing, setCurrentDrawing] = useState<
         Tables<"drawings"> | null
     >(null);
 
     useEffect(() => {
-        async function fetchMostRecentDrawing() {
+        async function fetchcurrentDrawing() {
             if (!user?.id) return;
 
             const { data, error } = await supabase
@@ -31,14 +31,14 @@ export function useMostRecentDrawing() {
                 return;
             }
 
-            console.log("mostRecentDrawing: ", data);
+            console.log("currentDrawing: ", data);
 
-            setMostRecentDrawing(
+            setCurrentDrawing(
                 data && data.length > 0 ? data[0] : null,
             );
         }
 
-        fetchMostRecentDrawing();
+        fetchcurrentDrawing();
 
         // Set up realtime subscription
         if (user?.id) {
@@ -58,7 +58,7 @@ export function useMostRecentDrawing() {
                             payload,
                         );
                         if (payload.new) {
-                            setMostRecentDrawing(
+                            setCurrentDrawing(
                                 payload.new as Tables<"drawings">,
                             );
                         }
@@ -72,7 +72,7 @@ export function useMostRecentDrawing() {
         }
     }, [user?.id]);
 
-    return mostRecentDrawing;
+    return currentDrawing;
 }
 
 /**
@@ -136,7 +136,7 @@ export function useRecommendations(activeDrawingId: string | null) {
                                 "recommendation subscription triggered: ",
                                 payload,
                             );
-                            fetchRecommendations(); // Refetch all recommendations when new one is added
+                            fetchRecommendations();
                         }
                     },
                 )

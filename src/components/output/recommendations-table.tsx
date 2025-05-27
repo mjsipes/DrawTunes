@@ -5,7 +5,7 @@ import { FaApple } from "react-icons/fa";
 import { Card, CardContent } from "@/components/ui/card";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import { useCurrentDrawing, useRecommendations } from "@/hooks/useMusicData";
 import {
   Table,
   TableBody,
@@ -102,9 +102,9 @@ function RecommendationsTableContent({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
-  const mostRecentDrawing = useMostRecentDrawing();
+  const currentDrawing = useCurrentDrawing();
   const { recommendations } = useRecommendations(
-    mostRecentDrawing?.drawing_id ?? null
+    currentDrawing?.drawing_id ?? null
   );
 
   return (
