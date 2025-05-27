@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/auth/AuthProvider";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
 /**
@@ -83,6 +83,7 @@ export function useCurrentDrawing() {
 export function useRecommendations(activeDrawingId: string | null) {
     const supabase = createClient();
     const [recommendations, setRecommendations] = useState<any[]>([]);
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         async function fetchRecommendations() {
@@ -136,7 +137,14 @@ export function useRecommendations(activeDrawingId: string | null) {
                                 "recommendation subscription triggered: ",
                                 payload,
                             );
-                            fetchRecommendations();
+                            // Clear any existing timer
+                            if (debounceTimer.current) {
+                                clearTimeout(debounceTimer.current);
+                            }
+                            // Set a new timer to fetch after 500ms
+                            debounceTimer.current = setTimeout(() => {
+                                fetchRecommendations();
+                            }, 500);
                         }
                     },
                 )
@@ -144,6 +152,10 @@ export function useRecommendations(activeDrawingId: string | null) {
 
             return () => {
                 supabase.removeChannel(channel);
+                // Clear the timer on cleanup
+                if (debounceTimer.current) {
+                    clearTimeout(debounceTimer.current);
+                }
             };
         }
     }, [activeDrawingId]);
