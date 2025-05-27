@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMostRecentDrawing, useRecommendations } from "@/hooks/useMusicData";
+import { cn } from "@/lib/utils";
 
 interface AudioPlayerProps {
   currentSongIndex: number | null;
   onSkip: () => void;
   shouldPlay: boolean;
+  className?: string;
 }
 
-function AudioPlayerSkeleton() {
+function AudioPlayerSkeleton({ className }: { className?: string }) {
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4">
+    <Card className={cn(className)}>
+      <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 w-[280px]">
@@ -43,6 +45,7 @@ function AudioPlayerContent({
   currentSongIndex,
   onSkip,
   shouldPlay,
+  className,
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -153,12 +156,12 @@ function AudioPlayerContent({
   }, [currentSong, shouldPlay]);
 
   if (!currentSong) {
-    return <AudioPlayerSkeleton />;
+    return <AudioPlayerSkeleton className={className} />;
   }
 
   return (
-    <Card className="mb-4">
-      <CardContent className="p-4">
+    <Card className={cn(className)}>
+      <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 w-[280px]">
@@ -217,7 +220,7 @@ function AudioPlayerContent({
 
 export function AudioPlayer(props: AudioPlayerProps) {
   return (
-    <Suspense fallback={<AudioPlayerSkeleton />}>
+    <Suspense fallback={<AudioPlayerSkeleton className={props.className} />}>
       <AudioPlayerContent {...props} />
     </Suspense>
   );

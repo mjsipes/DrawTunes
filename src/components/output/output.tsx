@@ -20,7 +20,7 @@ export default function Output() {
   };
 
   return (
-    <div className="w-[450px]">
+    <div className="w-[450px] space-y-4">
       <AudioPlayer
         currentSongIndex={currentSongIndex}
         onSkip={handleSkipSong}
