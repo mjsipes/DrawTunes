@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Music } from "lucide-react";
 import { FaApple } from "react-icons/fa";
 
@@ -195,11 +194,3 @@ export function RecommendationsTable({
     </Card>
   );
 }
-
-// export function RecommendationsTable(props: RecommendationsTableProps) {
-//   return (
-//     <Suspense fallback={<RecommendationsSkeleton />}>
-//       <RecommendationsTableContent {...props} />
-//     </Suspense>
-//   );
-// }

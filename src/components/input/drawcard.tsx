@@ -42,9 +42,7 @@ export default function DrawCard() {
     if (!canvasRef.current) return;
 
     setIsLoading(true);
-    console.log("Before clear - currentDrawing:", currentDrawing);
     clearCurrentDrawing();
-    console.log("After clear - currentDrawing:", currentDrawing);
     setError(null);
 
     try {
