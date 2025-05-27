@@ -50,7 +50,9 @@ function AudioPlayerContent({
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number>();
+  const lastUpdateTimeRef = useRef<number>(0);
+  const lastProgressRef = useRef<number>(0);
 
   const activeDrawingId = useMostRecentDrawing();
   const { recommendations } = useRecommendations(activeDrawingId);
@@ -60,18 +62,31 @@ function AudioPlayerContent({
       ? recommendations[currentSongIndex]?.song?.full_track_data
       : null;
 
-  const startProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
+  const updateProgress = (timestamp: number) => {
+    if (!audioRef.current) return;
+
+    const currentTime = audioRef.current.currentTime;
+    const duration = audioRef.current.duration;
+    const currentProgress = (currentTime / duration) * 100;
+
+    // Only update the actual progress if it's significantly different
+    if (Math.abs(currentProgress - lastProgressRef.current) > 0.1) {
+      lastProgressRef.current = currentProgress;
+      lastUpdateTimeRef.current = timestamp;
+      setProgress(isNaN(currentProgress) ? 0 : currentProgress);
     }
 
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const value =
-          (audioRef.current.currentTime / audioRef.current.duration) * 100;
-        setProgress(isNaN(value) ? 0 : value);
-      }
-    }, 500);
+    // Continue the animation loop
+    animationFrameRef.current = requestAnimationFrame(updateProgress);
+  };
+
+  const startProgressTracking = () => {
+    if (audioRef.current) {
+      lastUpdateTimeRef.current = performance.now();
+      animationFrameRef.current = requestAnimationFrame((timestamp) =>
+        updateProgress(timestamp)
+      );
+    }
   };
 
   const stopAudio = () => {
@@ -81,9 +96,8 @@ function AudioPlayerContent({
       audioRef.current = null;
     }
 
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
 
     setProgress(0);
@@ -115,8 +129,8 @@ function AudioPlayerContent({
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
         }
       } else {
         audioRef.current.play();
