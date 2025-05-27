@@ -58,7 +58,7 @@ function RecommendationsSkeleton() {
   return (
     <Card>
       <CardContent className="p-0">
-        <ScrollArea className="h-[280px]">
+        {/* <ScrollArea className="h-[280px]"> */}
           <Table className="border-collapse table-fixed w-full">
             <TableHeader>
               <TableRow>
@@ -92,7 +92,7 @@ function RecommendationsSkeleton() {
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
+        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );
@@ -108,7 +108,7 @@ function RecommendationsTableContent({
   return (
     <Card>
       <CardContent className="p-0">
-        <ScrollArea className="h-[280px]">
+        {/* <ScrollArea className="h-[280px]"> */}
           <Table className="border-collapse table-fixed w-full">
             <TableHeader>
               <TableRow>
@@ -192,7 +192,7 @@ function RecommendationsTableContent({
               )}
             </TableBody>
           </Table>
-        </ScrollArea>
+        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );
