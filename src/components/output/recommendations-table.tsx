@@ -59,7 +59,7 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
 
 function RecommendationsSkeleton() {
   return (
-    <Card>
+    <Card className="py-0">
       <CardContent className="p-0">
         {/* <ScrollArea className="h-[280px]"> */}
         <Table className="border-collapse table-fixed w-full">
@@ -117,7 +117,6 @@ export function RecommendationsTable({
   return (
     <Card className="py-0">
       <CardContent className="p-0">
-        {/* <ScrollArea className="h-[280px]"> */}
         <Table className="border-collapse table-fixed w-full">
           <TableHeader>
             <TableRow>
@@ -128,6 +127,8 @@ export function RecommendationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
+
+
             {recommendations.map((rec: Recommendation, index: number) => {
               const trackData = rec.song?.full_track_data;
               if (!trackData) return null;
@@ -184,9 +185,12 @@ export function RecommendationsTable({
                 </TableRow>
               );
             })}
+
+
+
+
           </TableBody>
         </Table>
-        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );
