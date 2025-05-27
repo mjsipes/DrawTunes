@@ -14,12 +14,6 @@ interface iTunesTrack {
     trackViewUrl?: string;
 }
 
-interface Song {
-    id: string;
-    full_track_data: iTunesTrack;
-    last_updated: string | null;
-}
-
 // Create a cache for our resources
 const resourceCache = new Map();
 
