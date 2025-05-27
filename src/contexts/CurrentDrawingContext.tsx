@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/supabase/auth/AuthProvider";
+import { useAuth } from "@/lib/supabase/AuthProvider";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
