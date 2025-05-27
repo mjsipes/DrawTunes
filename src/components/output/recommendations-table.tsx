@@ -101,7 +101,7 @@ function RecommendationsSkeleton() {
   );
 }
 
-function RecommendationsTableContent({
+export function RecommendationsTable({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
@@ -109,6 +109,10 @@ function RecommendationsTableContent({
   const { recommendations } = useRecommendations(
     currentDrawing?.drawing_id ?? null
   );
+
+  if (!currentDrawing) {
+    return <RecommendationsSkeleton />;
+  }
 
   return (
     <Card className="py-0">
@@ -124,75 +128,62 @@ function RecommendationsTableContent({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recommendations.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-10">
-                  <div className="flex flex-col items-center gap-2">
-                    <Music size={28} className="text-blue-400" />
-                    <span className="text-slate-500">
-                      No music recommendations yet
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              recommendations.map((rec: Recommendation, index: number) => {
-                const trackData = rec.song?.full_track_data;
-                if (!trackData) return null;
+            {recommendations.map((rec: Recommendation, index: number) => {
+              const trackData = rec.song?.full_track_data;
+              if (!trackData) return null;
 
-                const isCurrentSong = currentSongIndex === index;
+              const isCurrentSong = currentSongIndex === index;
 
-                return (
-                  <TableRow
-                    key={rec.id}
-                    className={`cursor-pointer hover:bg-slate-50 ${
-                      isCurrentSong ? "bg-slate-100" : ""
-                    }`}
-                    onClick={() => onSongSelect(index)}
-                  >
-                    <TableCell className="w-[30px] text-center text-sm">
-                      {isCurrentSong ? (
-                        <div className="flex justify-center">
-                          <Music size={16} className="text-blue-500" />
-                        </div>
-                      ) : (
-                        index + 1
-                      )}
-                    </TableCell>
-                    <TableCell className="w-[180px] font-medium text-sm">
-                      <div className="flex items-center gap-2">
-                        {getArtworkUrl(trackData) && (
-                          <img
-                            src={getArtworkUrl(trackData)!}
-                            alt={`${trackData.collectionName || ""} cover`}
-                            className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
-                          />
-                        )}
-                        <span className="truncate">{trackData.trackName}</span>
+              return (
+                <TableRow
+                  key={rec.id}
+                  className={`cursor-pointer hover:bg-slate-50 ${
+                    isCurrentSong ? "bg-slate-100" : ""
+                  }`}
+                  onClick={() => onSongSelect(index)}
+                >
+                  <TableCell className="w-[30px] text-center text-sm">
+                    {isCurrentSong ? (
+                      <div className="flex justify-center">
+                        <Music size={16} className="text-blue-500" />
                       </div>
-                    </TableCell>
-                    <TableCell className="w-[100px] text-sm truncate">
-                      {trackData.artistName || "Unknown Artist"}
-                    </TableCell>
-                    <TableCell className="w-[30px] text-right">
-                      {trackData?.trackViewUrl && (
-                        <div className="flex justify-end pr-2">
-                          <a
-                            href={trackData.trackViewUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-red-500 hover:underline"
-                          >
-                            <FaApple size={16} />
-                          </a>
-                        </div>
+                    ) : (
+                      index + 1
+                    )}
+                  </TableCell>
+                  <TableCell className="w-[180px] font-medium text-sm">
+                    <div className="flex items-center gap-2">
+                      {getArtworkUrl(trackData) && (
+                        <img
+                          src={getArtworkUrl(trackData)!}
+                          alt={`${trackData.collectionName || ""} cover`}
+                          className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
+                        />
                       )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
+                      <span className="truncate">{trackData.trackName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="w-[100px] text-sm truncate">
+                    {trackData.artistName || "Unknown Artist"}
+                  </TableCell>
+                  <TableCell className="w-[30px] text-right">
+                    {trackData?.trackViewUrl && (
+                      <div className="flex justify-end pr-2">
+                        <a
+                          href={trackData.trackViewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-red-500 hover:underline"
+                        >
+                          <FaApple size={16} />
+                        </a>
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         {/* </ScrollArea> */}
@@ -201,10 +192,10 @@ function RecommendationsTableContent({
   );
 }
 
-export function RecommendationsTable(props: RecommendationsTableProps) {
-  return (
-    <Suspense fallback={<RecommendationsSkeleton />}>
-      <RecommendationsTableContent {...props} />
-    </Suspense>
-  );
-}
+// export function RecommendationsTable(props: RecommendationsTableProps) {
+//   return (
+//     <Suspense fallback={<RecommendationsSkeleton />}>
+//       <RecommendationsTableContent {...props} />
+//     </Suspense>
+//   );
+// }
