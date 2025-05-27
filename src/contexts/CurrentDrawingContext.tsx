@@ -22,6 +22,7 @@ export function CurrentDrawingProvider({ children }: { children: ReactNode }) {
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
+    window.dispatchEvent(new CustomEvent("clearRecommendations"));
   };
 
   useEffect(() => {
@@ -94,11 +95,6 @@ export function useCurrentDrawing() {
   return context;
 }
 
-/**
- * Hook that fetches and tracks song recommendations for a given drawing.
- * Sets up realtime subscription to update when new recommendations are added.
- * Returns an array of recommendations with associated song data.
- */
 export function useRecommendations(activeDrawingId: string | null) {
   const supabase = createClient();
   const [recommendations, setRecommendations] = useState<any[]>([]);
@@ -171,6 +167,26 @@ export function useRecommendations(activeDrawingId: string | null) {
           clearTimeout(debounceTimer.current);
         }
       };
+    }
+  }, [activeDrawingId]);
+
+  useEffect(() => {
+    const handleClearRecommendations = () => {
+      setRecommendations([]);
+    };
+
+    window.addEventListener("clearRecommendations", handleClearRecommendations);
+    return () => {
+      window.removeEventListener(
+        "clearRecommendations",
+        handleClearRecommendations
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeDrawingId) {
+      setRecommendations([]);
     }
   }, [activeDrawingId]);
 
