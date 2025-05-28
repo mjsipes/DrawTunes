@@ -56,50 +56,6 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   return null;
 };
 
-function RecommendationsSkeleton() {
-  return (
-    <Card className="py-0">
-      <CardContent className="p-0">
-        {/* <ScrollArea className="h-[280px]"> */}
-        <Table className="border-collapse table-fixed w-full">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[30px] text-center">#</TableHead>
-              <TableHead className="w-[180px]">Track</TableHead>
-              <TableHead className="w-[100px]">Artist</TableHead>
-              <TableHead className="w-[30px] text-right"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 5 }).map((_, index) => (
-              <TableRow key={index}>
-                <TableCell className="text-center">
-                  <Skeleton className="h-4 w-4 mx-auto" />
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="w-8 h-8 rounded-sm" />
-                    <Skeleton className="h-4 w-[130px]" />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end pr-2">
-                    <Skeleton className="h-4 w-4" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {/* </ScrollArea> */}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function RecommendationsTable({
   currentSongIndex,
   onSongSelect,
@@ -109,10 +65,6 @@ export function RecommendationsTable({
     currentDrawing?.drawing_id ?? null
   );
 
-  if (!currentDrawing) {
-    return <RecommendationsSkeleton />;
-  }
-
   return (
     <Card className="py-0">
       <CardContent className="p-0">
@@ -126,68 +78,88 @@ export function RecommendationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-
-
-            {recommendations.map((rec: Recommendation, index: number) => {
-              const trackData = rec.song?.full_track_data;
-              if (!trackData) return null;
-
-              const isCurrentSong = currentSongIndex === index;
-
-              return (
-                <TableRow
-                  key={rec.id}
-                  className={`cursor-pointer hover:bg-slate-50 ${
-                    isCurrentSong ? "bg-slate-100" : ""
-                  }`}
-                  onClick={() => onSongSelect(index)}
-                >
-                  <TableCell className="w-[30px] text-center text-sm">
-                    {isCurrentSong ? (
-                      <div className="flex justify-center">
-                        <Music size={16} className="text-blue-500" />
+            {!currentDrawing
+              ? // Render 5 skeleton rows when no current drawing
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="text-center">
+                      <Skeleton className="h-4 w-4 mx-auto" />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="w-8 h-8 rounded-sm" />
+                        <Skeleton className="h-4 w-[130px]" />
                       </div>
-                    ) : (
-                      index + 1
-                    )}
-                  </TableCell>
-                  <TableCell className="w-[180px] font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      {getArtworkUrl(trackData) && (
-                        <img
-                          src={getArtworkUrl(trackData)!}
-                          alt={`${trackData.collectionName || ""} cover`}
-                          className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
-                        />
-                      )}
-                      <span className="truncate">{trackData.trackName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="w-[100px] text-sm truncate">
-                    {trackData.artistName || "Unknown Artist"}
-                  </TableCell>
-                  <TableCell className="w-[30px] text-right">
-                    {trackData?.trackViewUrl && (
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-4 w-[100px]" />
+                    </TableCell>
+                    <TableCell className="text-right">
                       <div className="flex justify-end pr-2">
-                        <a
-                          href={trackData.trackViewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-red-500 hover:underline"
-                        >
-                          <FaApple size={16} />
-                        </a>
+                        <Skeleton className="h-4 w-4" />
                       </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    </TableCell>
+                  </TableRow>
+                ))
+              : // Render recommendations when current drawing exists
+                recommendations.map((rec: Recommendation, index: number) => {
+                  const trackData = rec.song?.full_track_data;
+                  if (!trackData) return null;
 
+                  const isCurrentSong = currentSongIndex === index;
 
-
-
+                  return (
+                    <TableRow
+                      key={rec.id}
+                      className={`cursor-pointer hover:bg-slate-50 ${
+                        isCurrentSong ? "bg-slate-100" : ""
+                      }`}
+                      onClick={() => onSongSelect(index)}
+                    >
+                      <TableCell className="w-[30px] text-center text-sm">
+                        {isCurrentSong ? (
+                          <div className="flex justify-center">
+                            <Music size={16} className="text-blue-500" />
+                          </div>
+                        ) : (
+                          index + 1
+                        )}
+                      </TableCell>
+                      <TableCell className="w-[180px] font-medium text-sm">
+                        <div className="flex items-center gap-2">
+                          {getArtworkUrl(trackData) && (
+                            <img
+                              src={getArtworkUrl(trackData)!}
+                              alt={`${trackData.collectionName || ""} cover`}
+                              className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
+                            />
+                          )}
+                          <span className="truncate">
+                            {trackData.trackName}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="w-[100px] text-sm truncate">
+                        {trackData.artistName || "Unknown Artist"}
+                      </TableCell>
+                      <TableCell className="w-[30px] text-right">
+                        {trackData?.trackViewUrl && (
+                          <div className="flex justify-end pr-2">
+                            <a
+                              href={trackData.trackViewUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-red-500 hover:underline"
+                            >
+                              <FaApple size={16} />
+                            </a>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
           </TableBody>
         </Table>
       </CardContent>
