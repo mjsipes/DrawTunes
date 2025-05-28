@@ -48,6 +48,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
+    
+    // Also clear audio state when clearing the drawing
+    if (window.sharedAudioState) {
+      if (window.sharedAudioState.audioElement) {
+        window.sharedAudioState.audioElement.pause();
+        window.sharedAudioState.audioElement = null;
+      }
+      if (window.sharedAudioState.progressInterval) {
+        clearInterval(window.sharedAudioState.progressInterval);
+        window.sharedAudioState.progressInterval = null;
+      }
+      window.sharedAudioState.isPlaying = false;
+      window.sharedAudioState.currentUrl = "";
+      window.sharedAudioState.currentTime = 0;
+      window.sharedAudioState.progress = 0;
+    }
   };
 
   // Fetch current drawing
