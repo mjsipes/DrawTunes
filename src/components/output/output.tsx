@@ -3,12 +3,13 @@ import { AudioPlayer } from "./audio-player";
 import { RecommendationsTable } from "./recommendations-table";
 import { AISummary } from "./ai-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { RecommendationWithSong } from "@/contexts/CurrentDrawingContext";
 
 // Extend the Window interface to include sharedMusicContext
 declare global {
   interface Window {
     sharedMusicContext?: {
-      recommendations: any[];
+      recommendations: RecommendationWithSong[];
       // add other properties if needed
     };
   }

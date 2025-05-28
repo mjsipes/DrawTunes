@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import type { RecommendationWithSong } from "./contexts/CurrentDrawingContext";
 
 interface SharedAudioState {
   audioElement: HTMLAudioElement | null;
@@ -10,7 +11,7 @@ interface SharedAudioState {
 }
 
 interface SharedMusicContext {
-  recommendations: any[];
+  recommendations: RecommendationWithSong[];
 }
 
 declare global {

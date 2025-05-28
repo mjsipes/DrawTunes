@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
+import type { RecommendationWithSong } from "@/contexts/CurrentDrawingContext";
 
 /**
  * Hook that fetches and tracks the current drawing data for the current user.
@@ -86,7 +87,7 @@ export function useCurrentDrawing() {
  */
 export function useRecommendations(activeDrawingId: string | null) {
     const supabase = createClient();
-    const [recommendations, setRecommendations] = useState<any[]>([]);
+    const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -114,11 +115,20 @@ export function useRecommendations(activeDrawingId: string | null) {
             }
             console.log("fetched recommendations: ", data);
 
-            setRecommendations(data.map((item: any) => ({
-                id: item.id,
-                drawing_id: item.drawing_id,
-                song: item.songs,
-            })));
+            const typedRecommendations = data.map((item) => {
+                if (!item.songs) {
+                    console.warn("Item missing songs data:", item);
+                    return null;
+                }
+                
+                return {
+                    id: item.id,
+                    drawing_id: item.drawing_id,
+                    song: Array.isArray(item.songs) ? item.songs[0] : item.songs,
+                };
+            }).filter(Boolean) as RecommendationWithSong[];
+            
+            setRecommendations(typedRecommendations);
         }
 
         fetchRecommendations();

@@ -16,7 +16,7 @@ declare global {
       progress: number;
     };
     sharedMusicContext?: {
-      recommendations: any[];
+      recommendations: RecommendationWithSong[];
     };
   }
 }
@@ -33,7 +33,7 @@ interface iTunesTrack {
   trackViewUrl?: string;
 }
 
-interface RecommendationWithSong {
+export interface RecommendationWithSong {
   id: string;
   drawing_id: string | null;
   song: {
@@ -56,9 +56,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const supabase = createClient();
   const [currentDrawing, setCurrentDrawing] =
     useState<Tables<"drawings"> | null>(null);
-  const [recommendations, setRecommendations] = useState<
-    RecommendationWithSong[]
-  >([]);
+  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const clearCurrentDrawing = () => {
