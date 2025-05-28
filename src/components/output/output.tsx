@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function Output() {
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [shouldPlay, setShouldPlay] = useState(false);
+  const [activeTab, setActiveTab] = useState("audio");
 
   const handleSkipSong = () => {
     setCurrentSongIndex((prevIndex) => {
@@ -21,9 +22,13 @@ export default function Output() {
     setShouldPlay(true);
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   return (
     <div className="w-[450px] space-y-4">
-      <Tabs defaultValue="audio">
+      <Tabs defaultValue="audio" onValueChange={handleTabChange}>
         <div className="flex justify-center">
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="audio">Audio Player</TabsTrigger>
@@ -39,6 +44,14 @@ export default function Output() {
         </TabsContent>
         <TabsContent value="summary">
           <AISummary />
+          {/* Always render AudioPlayer but keep it invisible when on the summary tab */}
+          <div style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+            <AudioPlayer
+              currentSongIndex={currentSongIndex}
+              onSkip={handleSkipSong}
+              shouldPlay={shouldPlay}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
