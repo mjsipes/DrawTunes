@@ -3,10 +3,7 @@ import { FaApple } from "react-icons/fa";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useCurrentDrawing,
-  useRecommendations,
-} from "@/contexts/CurrentDrawingContext";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
 import {
   Table,
   TableBody,
@@ -100,10 +97,7 @@ export function RecommendationsTable({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
-  const { currentDrawing } = useCurrentDrawing();
-  const { recommendations } = useRecommendations(
-    currentDrawing?.drawing_id ?? null
-  );
+  const { currentDrawing, recommendations } = useMusic();
 
   if (!currentDrawing) {
     return <RecommendationsSkeleton />;

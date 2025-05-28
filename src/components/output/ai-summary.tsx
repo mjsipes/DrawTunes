@@ -1,4 +1,4 @@
-import { useCurrentDrawing } from "@/contexts/CurrentDrawingContext";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
 import { CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ function AISummarySkeleton() {
 }
 
 export function AISummary() {
-  const { currentDrawing } = useCurrentDrawing();
+  const { currentDrawing } = useMusic();
 
   console.log("AISummary render - currentDrawing:", currentDrawing);
 

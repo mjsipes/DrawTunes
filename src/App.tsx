@@ -6,13 +6,13 @@ import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CurrentDrawingProvider } from "@/contexts/CurrentDrawingContext";
+import { MusicProvider } from "@/contexts/CurrentDrawingContext";
 
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="synesthesia-ui-theme">
       <AuthProvider>
-        <CurrentDrawingProvider>
+        <MusicProvider>
           <SidebarProvider>
             <AppSidebar />
             <SidebarTrigger />
@@ -40,7 +40,7 @@ function App() {
               </div>
             </div>
           </SidebarProvider>
-        </CurrentDrawingProvider>
+        </MusicProvider>
       </AuthProvider>
     </ThemeProvider>
   );

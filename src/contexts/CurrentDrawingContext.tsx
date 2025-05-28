@@ -2,29 +2,41 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/AuthProvider";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Tables } from "@/lib/supabase/database.types";
+import type { Json, Tables } from "@/lib/supabase/database.types";
 
-interface CurrentDrawingContextType {
-  currentDrawing: Tables<"drawings"> | null;
-  clearCurrentDrawing: () => void;
+interface RecommendationWithSong {
+  id: string;
+  drawing_id: string | null;
+  song_id: string | null;
+  song: {
+    id: string;
+    full_track_data: Json;
+    last_updated: string | null;
+  };
 }
 
-const CurrentDrawingContext = createContext<
-  CurrentDrawingContextType | undefined
->(undefined);
+interface MusicContextType {
+  currentDrawing: Tables<"drawings"> | null;
+  clearCurrentDrawing: () => void;
+  recommendations: RecommendationWithSong[];
+}
 
-export function CurrentDrawingProvider({ children }: { children: ReactNode }) {
+const MusicContext = createContext<MusicContextType | undefined>(undefined);
+
+export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
-  const [currentDrawing, setCurrentDrawing] =
-    useState<Tables<"drawings"> | null>(null);
+  const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
-    window.dispatchEvent(new CustomEvent("clearRecommendations"));
+    setRecommendations([]);
   };
 
+  // Fetch current drawing
   useEffect(() => {
     async function fetchCurrentDrawing() {
       if (!user?.id) return;
@@ -73,51 +85,24 @@ export function CurrentDrawingProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id]);
 
-  return (
-    <CurrentDrawingContext.Provider
-      value={{
-        currentDrawing,
-        clearCurrentDrawing,
-      }}
-    >
-      {children}
-    </CurrentDrawingContext.Provider>
-  );
-}
-
-export function useCurrentDrawing() {
-  const context = useContext(CurrentDrawingContext);
-  if (context === undefined) {
-    throw new Error(
-      "useCurrentDrawing must be used within a CurrentDrawingProvider"
-    );
-  }
-  return context;
-}
-
-export function useRecommendations(activeDrawingId: string | null) {
-  const supabase = createClient();
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-
+  // Fetch recommendations when drawing changes
   useEffect(() => {
     async function fetchRecommendations() {
-      if (!activeDrawingId) return;
+      if (!currentDrawing?.drawing_id) return;
 
+      // Try to query without specifying the foreign key column
       const { data, error } = await supabase
         .from("recommendations")
-        .select(
-          `
+        .select(`
           id,
           drawing_id,
-          songs:song_id (
-            id,
+          songs!inner (
+            id, 
             full_track_data,
             last_updated
           )
-          `
-        )
-        .eq("drawing_id", activeDrawingId);
+        `)
+        .eq("drawing_id", currentDrawing.drawing_id);
 
       if (error) {
         console.error("Error fetching recommendations:", error);
@@ -126,7 +111,7 @@ export function useRecommendations(activeDrawingId: string | null) {
       console.log("fetched recommendations: ", data);
 
       setRecommendations(
-        data.map((item: any) => ({
+        data.map((item) => ({
           id: item.id,
           drawing_id: item.drawing_id,
           song: item.songs,
@@ -136,7 +121,7 @@ export function useRecommendations(activeDrawingId: string | null) {
 
     fetchRecommendations();
 
-    if (activeDrawingId) {
+    if (currentDrawing?.drawing_id) {
       const channel = supabase
         .channel("recommendations-channel")
         .on(
@@ -145,7 +130,7 @@ export function useRecommendations(activeDrawingId: string | null) {
             event: "INSERT",
             schema: "public",
             table: "recommendations",
-            filter: `drawing_id=eq.${activeDrawingId}`,
+            filter: `drawing_id=eq.${currentDrawing.drawing_id}`,
           },
           (payload) => {
             if (payload.new) {
@@ -168,27 +153,27 @@ export function useRecommendations(activeDrawingId: string | null) {
         }
       };
     }
-  }, [activeDrawingId]);
+  }, [currentDrawing?.id]);
 
-  useEffect(() => {
-    const handleClearRecommendations = () => {
-      setRecommendations([]);
-    };
+  return (
+    <MusicContext.Provider
+      value={{
+        currentDrawing,
+        clearCurrentDrawing,
+        recommendations,
+      }}
+    >
+      {children}
+    </MusicContext.Provider>
+  );
+}
 
-    window.addEventListener("clearRecommendations", handleClearRecommendations);
-    return () => {
-      window.removeEventListener(
-        "clearRecommendations",
-        handleClearRecommendations
-      );
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!activeDrawingId) {
-      setRecommendations([]);
-    }
-  }, [activeDrawingId]);
-
-  return { recommendations };
+export function useMusic() {
+  const context = useContext(MusicContext);
+  if (context === undefined) {
+    throw new Error(
+      "useMusic must be used within a MusicProvider"
+    );
+  }
+  return context;
 }
