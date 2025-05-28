@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, Suspense } from "react";
+import { useState, useRef, useEffect} from "react";
 import { Music, SkipForward, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ interface AudioPlayerProps {
 }
 
 
-function AudioPlayerContent({
+export function AudioPlayer({
   currentSongIndex,
   onSkip,
   shouldPlay,
@@ -194,15 +194,6 @@ function AudioPlayerContent({
     </Card>
   );
 }
-
-export function AudioPlayer(props: AudioPlayerProps) {
-  return (
-    <Suspense fallback={<AudioPlayerSkeleton />}>
-      <AudioPlayerContent {...props} />
-    </Suspense>
-  );
-}
-
 
 function AudioPlayerSkeleton() {
   return (
