@@ -9,8 +9,13 @@ interface SharedAudioState {
   progress: number;
 }
 
+interface SharedMusicContext {
+  recommendations: any[];
+}
+
 declare global {
   interface Window {
     sharedAudioState?: SharedAudioState;
+    sharedMusicContext?: SharedMusicContext;
   }
 }

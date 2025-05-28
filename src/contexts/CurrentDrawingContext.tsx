@@ -4,6 +4,23 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
+// Extend the Window interface to include sharedAudioState and sharedMusicContext
+declare global {
+  interface Window {
+    sharedAudioState?: {
+      audioElement: HTMLAudioElement | null;
+      progressInterval: NodeJS.Timeout | null;
+      isPlaying: boolean;
+      currentUrl: string;
+      currentTime: number;
+      progress: number;
+    };
+    sharedMusicContext?: {
+      recommendations: any[];
+    };
+  }
+}
+
 interface iTunesTrack {
   trackId: number;
   trackName: string;
@@ -48,7 +65,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
-    
+
+    // Update shared music context
+    if (!window.sharedMusicContext) {
+      window.sharedMusicContext = { recommendations: [] };
+    } else {
+      window.sharedMusicContext.recommendations = [];
+    }
+
     // Also clear audio state when clearing the drawing
     if (window.sharedAudioState) {
       if (window.sharedAudioState.audioElement) {
@@ -154,29 +178,32 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      console.log("Raw recommendation data:", data);
+      console.log("Recommendations data:", data);
 
-      // Process the data and handle both array and single object scenarios
-      const processedData = data
+      // Normalize data structure for consistent format
+      const normalizedData = data
         .map((item) => {
-          // Make sure songs exists and has the expected structure
           if (!item.songs) {
             console.warn("Item missing songs data:", item);
             return null;
           }
 
-          const song = Array.isArray(item.songs) ? item.songs[0] : item.songs;
-
           return {
             id: item.id,
             drawing_id: item.drawing_id,
-            song: song,
+            song: Array.isArray(item.songs) ? item.songs[0] : item.songs,
           };
         })
         .filter(Boolean) as RecommendationWithSong[];
 
-      console.log("Processed recommendations:", processedData);
-      setRecommendations(processedData);
+      setRecommendations(normalizedData);
+
+      // Update the shared music context
+      if (!window.sharedMusicContext) {
+        window.sharedMusicContext = { recommendations: normalizedData };
+      } else {
+        window.sharedMusicContext.recommendations = normalizedData;
+      }
     }
 
     fetchRecommendations();

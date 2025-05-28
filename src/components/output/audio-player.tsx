@@ -37,6 +37,13 @@ export function AudioPlayer({
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(window.sharedAudioState?.progressInterval || null);
 
   const { currentDrawing, recommendations } = useMusic();
+  
+  // Update shared music context with recommendations
+  if (!window.sharedMusicContext) {
+    window.sharedMusicContext = { recommendations };
+  } else {
+    window.sharedMusicContext.recommendations = recommendations;
+  }
 
   const currentSong =
     currentSongIndex !== null
