@@ -27,7 +27,7 @@ interface iTunesTrack {
 
 interface Recommendation {
   id: string;
-  drawing_id: string;
+  drawing_id: string | null;
   song: {
     id: string;
     full_track_data: iTunesTrack;

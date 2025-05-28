@@ -2,15 +2,26 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/AuthProvider";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import type { Json, Tables } from "@/lib/supabase/database.types";
+import type { Tables } from "@/lib/supabase/database.types";
+
+interface iTunesTrack {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string;
+  previewUrl?: string;
+  artworkUrl30?: string;
+  artworkUrl60?: string;
+  artworkUrl100?: string;
+  trackViewUrl?: string;
+}
 
 interface RecommendationWithSong {
   id: string;
   drawing_id: string | null;
-  song_id: string | null;
   song: {
     id: string;
-    full_track_data: Json;
+    full_track_data: iTunesTrack;
     last_updated: string | null;
   };
 }
@@ -26,8 +37,11 @@ const MusicContext = createContext<MusicContextType | undefined>(undefined);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
-  const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
-  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
+  const [currentDrawing, setCurrentDrawing] =
+    useState<Tables<"drawings"> | null>(null);
+  const [recommendations, setRecommendations] = useState<
+    RecommendationWithSong[]
+  >([]);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const clearCurrentDrawing = () => {
@@ -90,10 +104,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     async function fetchRecommendations() {
       if (!currentDrawing?.drawing_id) return;
 
+      // Debug the query
+      console.log(
+        "Querying recommendations for drawing ID:",
+        currentDrawing.drawing_id
+      );
+
       // Try to query without specifying the foreign key column
       const { data, error } = await supabase
         .from("recommendations")
-        .select(`
+        .select(
+          `
           id,
           drawing_id,
           songs!inner (
@@ -101,7 +122,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             full_track_data,
             last_updated
           )
-        `)
+        `
+        )
         .eq("drawing_id", currentDrawing.drawing_id);
 
       if (error) {
@@ -110,18 +132,43 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
       console.log("fetched recommendations: ", data);
 
-      setRecommendations(
-        data.map((item) => ({
-          id: item.id,
-          drawing_id: item.drawing_id,
-          song: item.songs,
-        }))
-      );
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.log("No recommendations data found");
+        setRecommendations([]);
+        return;
+      }
+
+      console.log("Raw recommendation data:", data);
+
+      // Process the data and handle both array and single object scenarios
+      const processedData = data
+        .map((item) => {
+          // Make sure songs exists and has the expected structure
+          if (!item.songs) {
+            console.warn("Item missing songs data:", item);
+            return null;
+          }
+
+          const song = Array.isArray(item.songs) ? item.songs[0] : item.songs;
+
+          return {
+            id: item.id,
+            drawing_id: item.drawing_id,
+            song: song,
+          };
+        })
+        .filter(Boolean) as RecommendationWithSong[];
+
+      console.log("Processed recommendations:", processedData);
+      setRecommendations(processedData);
     }
 
     fetchRecommendations();
 
     if (currentDrawing?.drawing_id) {
+      // Debug the shape of the data
+      console.log("Current drawing:", currentDrawing);
+
       const channel = supabase
         .channel("recommendations-channel")
         .on(
@@ -171,9 +218,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 export function useMusic() {
   const context = useContext(MusicContext);
   if (context === undefined) {
-    throw new Error(
-      "useMusic must be used within a MusicProvider"
-    );
+    throw new Error("useMusic must be used within a MusicProvider");
   }
   return context;
 }
