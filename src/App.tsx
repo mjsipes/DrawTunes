@@ -2,17 +2,17 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import Input from "@/components/input/input";
 import Output from "@/components/output/output";
-import { AuthProvider } from "@/lib/supabase/auth/AuthProvider";
+import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CurrentDrawingProvider } from "@/contexts/CurrentDrawingContext";
+import { MusicProvider } from "@/contexts/CurrentDrawingContext";
 
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="synesthesia-ui-theme">
       <AuthProvider>
-        <CurrentDrawingProvider>
+        <MusicProvider>
           <SidebarProvider>
             <AppSidebar />
             <SidebarTrigger />
@@ -40,7 +40,7 @@ function App() {
               </div>
             </div>
           </SidebarProvider>
-        </CurrentDrawingProvider>
+        </MusicProvider>
       </AuthProvider>
     </ThemeProvider>
   );

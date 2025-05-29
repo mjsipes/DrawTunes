@@ -1,14 +1,9 @@
-import { Suspense } from "react";
 import { Music } from "lucide-react";
 import { FaApple } from "react-icons/fa";
 
 import { Card, CardContent } from "@/components/ui/card";
-// import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useCurrentDrawing,
-  useRecommendations,
-} from "@/contexts/CurrentDrawingContext";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
 import {
   Table,
   TableBody,
@@ -18,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// iTunes API track type
 interface iTunesTrack {
   trackId: number;
   trackName: string;
@@ -30,9 +26,9 @@ interface iTunesTrack {
   trackViewUrl?: string;
 }
 
-interface Recommendation {
+interface RecommendationWithSong {
   id: string;
-  drawing_id: string;
+  drawing_id: string | null;
   song: {
     id: string;
     full_track_data: iTunesTrack;
@@ -45,7 +41,6 @@ interface RecommendationsTableProps {
   onSongSelect: (index: number) => void;
 }
 
-// Helper to get artwork URL with higher resolution
 const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
   if (song?.[artworkKey]) {
@@ -59,9 +54,8 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
 
 function RecommendationsSkeleton() {
   return (
-    <Card>
+    <Card className="py-0">
       <CardContent className="p-0">
-        {/* <ScrollArea className="h-[280px]"> */}
         <Table className="border-collapse table-fixed w-full">
           <TableHeader>
             <TableRow>
@@ -95,25 +89,26 @@ function RecommendationsSkeleton() {
             ))}
           </TableBody>
         </Table>
-        {/* </ScrollArea> */}
       </CardContent>
     </Card>
   );
 }
 
-function RecommendationsTableContent({
+export function RecommendationsTable({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
-  const { currentDrawing } = useCurrentDrawing();
-  const { recommendations } = useRecommendations(
-    currentDrawing?.drawing_id ?? null
-  );
+  const { currentDrawing, recommendations } = useMusic();
+
+  if (!currentDrawing) {
+    return <RecommendationsSkeleton />;
+  }
+
+  const skeletonRowsCount = Math.max(0, 5 - recommendations.length);
 
   return (
     <Card className="py-0">
       <CardContent className="p-0">
-        {/* <ScrollArea className="h-[280px]"> */}
         <Table className="border-collapse table-fixed w-full">
           <TableHeader>
             <TableRow>
@@ -124,19 +119,8 @@ function RecommendationsTableContent({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recommendations.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center py-10">
-                  <div className="flex flex-col items-center gap-2">
-                    <Music size={28} className="text-blue-400" />
-                    <span className="text-slate-500">
-                      No music recommendations yet
-                    </span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : (
-              recommendations.map((rec: Recommendation, index: number) => {
+            {recommendations.map(
+              (rec: RecommendationWithSong, index: number) => {
                 const trackData = rec.song?.full_track_data;
                 if (!trackData) return null;
 
@@ -191,20 +175,32 @@ function RecommendationsTableContent({
                     </TableCell>
                   </TableRow>
                 );
-              })
+              }
             )}
+            {Array.from({ length: skeletonRowsCount }).map((_, index) => (
+              <TableRow key={`skeleton-${index}`}>
+                <TableCell className="text-center">
+                  <Skeleton className="h-4 w-4 mx-auto" />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-8 h-8 rounded-sm" />
+                    <Skeleton className="h-4 w-[130px]" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-[100px]" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end pr-2">
+                    <Skeleton className="h-4 w-4" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
-        {/* </ScrollArea> */}
       </CardContent>
     </Card>
-  );
-}
-
-export function RecommendationsTable(props: RecommendationsTableProps) {
-  return (
-    <Suspense fallback={<RecommendationsSkeleton />}>
-      <RecommendationsTableContent {...props} />
-    </Suspense>
   );
 }
