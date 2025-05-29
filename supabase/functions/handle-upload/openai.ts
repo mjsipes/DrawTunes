@@ -6,17 +6,16 @@ export async function generateMusicRecommendations(imageUrl: string) {
         apiKey: apiKey,
     });
 
-    const num_songs = 5; // Number of songs to recommend
+    const num_songs = 5;
 
-    // Query GPT-4 for song recommendations based on image
-    const response = await openai.responses.create({
-        model: "gpt-4.1-mini",
-        input: [
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
             {
                 role: "user",
                 content: [
                     {
-                        type: "input_text",
+                        type: "text",
                         text:
                             `Generate music recommendations in this EXACT JSON format:
 
@@ -29,11 +28,6 @@ export async function generateMusicRecommendations(imageUrl: string) {
   "message": "Brief reasoning for these selections"
 }
 
-Based on this image: Analyze the mood, setting, cultural context, and visual elements. Select ${num_songs} songs that match the emotional tone, colors, and themes shown. Include:
-- A mix of mainstream hits (70%) and culturally significant tracks (30%)
-- Diverse global representation (American, Latin, European, Asian, African)
-- Songs in various languages (English, Spanish, French, Hindi, Korean, Arabic, etc.)
-- Music that complements the scene's emotional atmosphere
 
 IMPORTANT RESPONSE RULES:
 1. Return ONLY valid JSON with no markdown formatting
@@ -45,45 +39,28 @@ IMPORTANT RESPONSE RULES:
 
 The response must be parseable by JSON.parse() without any modifications.`,
                     },
-                    // Uncomment the following block to include the image
                     // {
-                    //     type: "input_image",
-                    //     image_url: imageUrl,
-                    //     detail: "auto",
+                    //     type: "image_url",
+                    //     image_url: { url: imageUrl },
                     // },
                 ],
             },
         ],
     });
 
-    console.log("OpenAI response received");
-
-    // Remove markdown code block syntax if present
-    let cleanedResponse = response.output_text.trim();
+    let cleanedResponse = response.choices[0].message.content!.trim();
     if (cleanedResponse.startsWith("```json")) {
-        // Remove opening ```json and closing ```
         cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(
             /\s*```$/,
             "",
         );
     }
 
-    // Now parse the cleaned JSON
     let responseData;
-    try {
-        responseData = JSON.parse(cleanedResponse);
-        console.log("Successfully parsed song recommendations");
-    } catch (e) {
-        console.error("Error parsing OpenAI response:", e);
-        throw new Error(`Failed to parse AI recommendations: ${e.message}`);
-    }
+    responseData = JSON.parse(cleanedResponse);
 
-    // Extract the message and songs
     const message = responseData.message || "No reasoning provided";
     const songs = responseData.songs || [];
-
-    console.log(`Found ${songs.length} song recommendations`);
-    console.log("Message:", message.substring(0, 50) + "..."); // Show first 50 chars
 
     return { message, songs };
 }
