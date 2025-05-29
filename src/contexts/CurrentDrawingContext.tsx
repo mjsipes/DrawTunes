@@ -12,6 +12,28 @@ interface AudioState {
   progressIntervalRef: React.RefObject<NodeJS.Timeout | undefined>;
 }
 
+interface iTunesTrack {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string;
+  previewUrl?: string;
+  artworkUrl30?: string;
+  artworkUrl60?: string;
+  artworkUrl100?: string;
+  trackViewUrl?: string;
+}
+
+interface RecommendationWithSong {
+  id: string;
+  drawing_id: string | null;
+  song: {
+    id: string;
+    full_track_data: iTunesTrack;
+    last_updated: string | null;
+  };
+}
+
 interface MusicContextType {
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;

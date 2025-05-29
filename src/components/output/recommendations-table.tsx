@@ -13,7 +13,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Using global type definitions from vite-env.d.ts
+// iTunes API track type
+interface iTunesTrack {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string;
+  previewUrl?: string;
+  artworkUrl30?: string;
+  artworkUrl60?: string;
+  artworkUrl100?: string;
+  trackViewUrl?: string;
+}
+
+interface RecommendationWithSong {
+  id: string;
+  drawing_id: string | null;
+  song: {
+    id: string;
+    full_track_data: iTunesTrack;
+    last_updated: string | null;
+  };
+}
 
 interface RecommendationsTableProps {
   currentSongIndex: number | null;
@@ -98,62 +119,64 @@ export function RecommendationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recommendations.map((rec: RecommendationWithSong, index: number) => {
-              const trackData = rec.song?.full_track_data;
-              if (!trackData) return null;
+            {recommendations.map(
+              (rec: RecommendationWithSong, index: number) => {
+                const trackData = rec.song?.full_track_data;
+                if (!trackData) return null;
 
-              const isCurrentSong = currentSongIndex === index;
+                const isCurrentSong = currentSongIndex === index;
 
-              return (
-                <TableRow
-                  key={rec.id}
-                  className={`cursor-pointer hover:bg-slate-50 ${
-                    isCurrentSong ? "bg-slate-100" : ""
-                  }`}
-                  onClick={() => onSongSelect(index)}
-                >
-                  <TableCell className="w-[30px] text-center text-sm">
-                    {isCurrentSong ? (
-                      <div className="flex justify-center">
-                        <Music size={16} className="text-blue-500" />
-                      </div>
-                    ) : (
-                      index + 1
-                    )}
-                  </TableCell>
-                  <TableCell className="w-[180px] font-medium text-sm">
-                    <div className="flex items-center gap-2">
-                      {getArtworkUrl(trackData) && (
-                        <img
-                          src={getArtworkUrl(trackData)!}
-                          alt={`${trackData.collectionName || ""} cover`}
-                          className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
-                        />
+                return (
+                  <TableRow
+                    key={rec.id}
+                    className={`cursor-pointer hover:bg-slate-50 ${
+                      isCurrentSong ? "bg-slate-100" : ""
+                    }`}
+                    onClick={() => onSongSelect(index)}
+                  >
+                    <TableCell className="w-[30px] text-center text-sm">
+                      {isCurrentSong ? (
+                        <div className="flex justify-center">
+                          <Music size={16} className="text-blue-500" />
+                        </div>
+                      ) : (
+                        index + 1
                       )}
-                      <span className="truncate">{trackData.trackName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="w-[100px] text-sm truncate">
-                    {trackData.artistName || "Unknown Artist"}
-                  </TableCell>
-                  <TableCell className="w-[30px] text-right">
-                    {trackData?.trackViewUrl && (
-                      <div className="flex justify-end pr-2">
-                        <a
-                          href={trackData.trackViewUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-red-500 hover:underline"
-                        >
-                          <FaApple size={16} />
-                        </a>
+                    </TableCell>
+                    <TableCell className="w-[180px] font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        {getArtworkUrl(trackData) && (
+                          <img
+                            src={getArtworkUrl(trackData)!}
+                            alt={`${trackData.collectionName || ""} cover`}
+                            className="w-8 h-8 rounded-sm object-cover shadow-sm flex-shrink-0"
+                          />
+                        )}
+                        <span className="truncate">{trackData.trackName}</span>
                       </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    </TableCell>
+                    <TableCell className="w-[100px] text-sm truncate">
+                      {trackData.artistName || "Unknown Artist"}
+                    </TableCell>
+                    <TableCell className="w-[30px] text-right">
+                      {trackData?.trackViewUrl && (
+                        <div className="flex justify-end pr-2">
+                          <a
+                            href={trackData.trackViewUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-red-500 hover:underline"
+                          >
+                            <FaApple size={16} />
+                          </a>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+            )}
             {Array.from({ length: skeletonRowsCount }).map((_, index) => (
               <TableRow key={`skeleton-${index}`}>
                 <TableCell className="text-center">
