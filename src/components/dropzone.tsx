@@ -2,11 +2,13 @@ import { cn } from "@/lib/utils";
 import { type UseSupabaseUploadReturn } from "@/hooks/use-supabase-upload";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, File, Loader2, Upload, X } from "lucide-react";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
 import {
   createContext,
   type PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
 } from "react";
 
 export const formatBytes = (
@@ -73,6 +75,7 @@ const Dropzone = ({
     </DropzoneContext.Provider>
   );
 };
+
 const DropzoneContent = ({ className }: { className?: string }) => {
   const {
     files,
@@ -85,8 +88,16 @@ const DropzoneContent = ({ className }: { className?: string }) => {
     maxFiles,
     isSuccess,
   } = useDropzoneContext();
+  const { clearCurrentDrawing } = useMusic();
 
   const exceedMaxFiles = files.length > maxFiles;
+
+  // Clear current drawing when upload is successful
+  useEffect(() => {
+    if (isSuccess) {
+      clearCurrentDrawing();
+    }
+  }, [isSuccess, clearCurrentDrawing]);
 
   const handleRemoveFile = useCallback(
     (fileName: string) => {
