@@ -13,7 +13,7 @@ export default function Header() {
         DrawTunes
       </h1>
 
-      <div className="inline-flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md font-mono text-xs">
+      <div className="hidden md:inline-flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md font-mono text-xs">
         <span>Built by</span>
         <a
           href="https://github.com/mjsipes"

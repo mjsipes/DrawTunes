@@ -18,7 +18,7 @@ function App() {
             <div className="container mx-auto p-4">
               <Header />
 
-              <div className="flex justify-center gap-16 w-full">
+              <div className="flex flex-col md:flex-row justify-center gap-8 md:gap-16 w-full">
                 <div className="max-w-md">
                   <Input />
                 </div>
