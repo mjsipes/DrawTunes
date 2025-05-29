@@ -13,27 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface iTunesTrack {
-  trackId: number;
-  trackName: string;
-  artistName: string;
-  collectionName: string;
-  previewUrl?: string;
-  artworkUrl30?: string;
-  artworkUrl60?: string;
-  artworkUrl100?: string;
-  trackViewUrl?: string;
-}
-
-interface Recommendation {
-  id: string;
-  drawing_id: string | null;
-  song: {
-    id: string;
-    full_track_data: iTunesTrack;
-    last_updated: string | null;
-  };
-}
+// Using global type definitions from vite-env.d.ts
 
 interface RecommendationsTableProps {
   currentSongIndex: number | null;
@@ -118,7 +98,7 @@ export function RecommendationsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recommendations.map((rec: Recommendation, index: number) => {
+            {recommendations.map((rec: RecommendationWithSong, index: number) => {
               const trackData = rec.song?.full_track_data;
               if (!trackData) return null;
 

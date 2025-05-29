@@ -16,7 +16,8 @@ interface AudioPlayerProps {
 
 // Initialize shared state on the window object if it doesn't exist
 if (!window.sharedAudioState) {
-  window.sharedAudioState = {
+  // Using type from global.d.ts
+  const initialAudioState: SharedAudioState = {
     audioElement: null,
     progressInterval: null,
     currentUrl: "",
@@ -24,6 +25,7 @@ if (!window.sharedAudioState) {
     isPlaying: false,
     progress: 0
   };
+  window.sharedAudioState = initialAudioState;
 }
 
 export function AudioPlayer({

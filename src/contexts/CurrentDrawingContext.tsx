@@ -4,44 +4,9 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
-// Extend the Window interface to include sharedAudioState and sharedMusicContext
-declare global {
-  interface Window {
-    sharedAudioState?: {
-      audioElement: HTMLAudioElement | null;
-      progressInterval: NodeJS.Timeout | null;
-      isPlaying: boolean;
-      currentUrl: string;
-      currentTime: number;
-      progress: number;
-    };
-    sharedMusicContext?: {
-      recommendations: RecommendationWithSong[];
-    };
-  }
-}
+// Window interface extended in vite-env.d.ts
 
-interface iTunesTrack {
-  trackId: number;
-  trackName: string;
-  artistName: string;
-  collectionName: string;
-  previewUrl?: string;
-  artworkUrl30?: string;
-  artworkUrl60?: string;
-  artworkUrl100?: string;
-  trackViewUrl?: string;
-}
-
-export interface RecommendationWithSong {
-  id: string;
-  drawing_id: string | null;
-  song: {
-    id: string;
-    full_track_data: iTunesTrack;
-    last_updated: string | null;
-  };
-}
+// Type definitions moved to vite-env.d.ts
 
 interface MusicContextType {
   currentDrawing: Tables<"drawings"> | null;
@@ -56,7 +21,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const supabase = createClient();
   const [currentDrawing, setCurrentDrawing] =
     useState<Tables<"drawings"> | null>(null);
-  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
+  const [recommendations, setRecommendations] = useState<
+    RecommendationWithSong[]
+  >([]);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   const clearCurrentDrawing = () => {

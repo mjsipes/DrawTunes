@@ -3,17 +3,9 @@ import { AudioPlayer } from "./audio-player";
 import { RecommendationsTable } from "./recommendations-table";
 import { AISummary } from "./ai-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { RecommendationWithSong } from "@/contexts/CurrentDrawingContext";
+// Using RecommendationWithSong from global types in vite-env.d.ts
 
-// Extend the Window interface to include sharedMusicContext
-declare global {
-  interface Window {
-    sharedMusicContext?: {
-      recommendations: RecommendationWithSong[];
-      // add other properties if needed
-    };
-  }
-}
+// Window interface extended in vite-env.d.ts
 
 export default function Output() {
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);

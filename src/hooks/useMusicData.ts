@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/AuthProvider";
 import { useEffect, useRef, useState } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
-import type { RecommendationWithSong } from "@/contexts/CurrentDrawingContext";
+// Using RecommendationWithSong from global types in vite-env.d.ts
 
 /**
  * Hook that fetches and tracks the current drawing data for the current user.
