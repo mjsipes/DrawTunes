@@ -12,19 +12,25 @@ export type Database = {
       drawings: {
         Row: {
           ai_message: string | null
+          created_at: string | null
           drawing_id: string | null
+          drawing_url: string | null
           id: number
           user_id: string | null
         }
         Insert: {
           ai_message?: string | null
+          created_at?: string | null
           drawing_id?: string | null
+          drawing_url?: string | null
           id?: number
           user_id?: string | null
         }
         Update: {
           ai_message?: string | null
+          created_at?: string | null
           drawing_id?: string | null
+          drawing_url?: string | null
           id?: number
           user_id?: string | null
         }
@@ -34,22 +40,22 @@ export type Database = {
         Row: {
           drawing_id: string | null
           id: string
-          songs_id: string | null
+          song_id: string | null
         }
         Insert: {
           drawing_id?: string | null
           id?: string
-          songs_id?: string | null
+          song_id?: string | null
         }
         Update: {
           drawing_id?: string | null
           id?: string
-          songs_id?: string | null
+          song_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "recommendations_songs_id_fkey"
-            columns: ["songs_id"]
+            foreignKeyName: "recommendations_song_id_fkey"
+            columns: ["song_id"]
             isOneToOne: false
             referencedRelation: "songs"
             referencedColumns: ["id"]

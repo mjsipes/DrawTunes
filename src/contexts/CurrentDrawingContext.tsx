@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/supabase/AuthProvider";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
@@ -38,6 +45,12 @@ interface MusicContextType {
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;
   recommendations: RecommendationWithSong[];
+  // New drawings list functionality
+  allDrawings: Tables<"drawings">[];
+  loadingDrawings: boolean;
+  hasMoreDrawings: boolean;
+  loadMoreDrawings: () => Promise<void>;
+  setCurrentDrawingById: (drawingId: string) => Promise<void>;
   // Audio state and controls
   audioState: AudioState;
   playAudio: (songIndex: number) => void;
@@ -48,6 +61,23 @@ interface MusicContextType {
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
+const DRAWINGS_PER_PAGE = 15;
+
+// Helper function for relative time
+const getRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800)
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+  return date.toLocaleDateString();
+};
+
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
@@ -57,6 +87,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     RecommendationWithSong[]
   >([]);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // New state for drawings list
+  const [allDrawings, setAllDrawings] = useState<Tables<"drawings">[]>([]);
+  const [loadingDrawings, setLoadingDrawings] = useState(false);
+  const [hasMoreDrawings, setHasMoreDrawings] = useState(true);
+  const [drawingsPage, setDrawingsPage] = useState(0);
 
   // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
@@ -85,6 +121,20 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         setProgress(isNaN(value) ? 0 : value);
       }
     }, 500);
+  };
+
+  const clearAudioState = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = undefined;
+    }
+    setCurrentSongIndex(null);
+    setIsPlaying(false);
+    setProgress(0);
   };
 
   const playAudio = async (songIndex: number) => {
@@ -147,20 +197,73 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
-
-    // Clear audio state
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = undefined;
-    }
-    setCurrentSongIndex(null);
-    setIsPlaying(false);
-    setProgress(0);
+    clearAudioState();
   };
+
+  // New function to load more drawings
+  const loadMoreDrawings = useCallback(async () => {
+    if (!user?.id || loadingDrawings || !hasMoreDrawings) return;
+
+    setLoadingDrawings(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("drawings")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(
+          drawingsPage * DRAWINGS_PER_PAGE,
+          (drawingsPage + 1) * DRAWINGS_PER_PAGE - 1
+        );
+
+      if (error) {
+        console.error("Error fetching drawings:", error);
+        return;
+      }
+
+      if (data) {
+        if (data.length < DRAWINGS_PER_PAGE) {
+          setHasMoreDrawings(false);
+        }
+
+        setAllDrawings((prev) =>
+          drawingsPage === 0 ? data : [...prev, ...data]
+        );
+        setDrawingsPage((prev) => prev + 1);
+      }
+    } catch (err) {
+      console.error("Error loading drawings:", err);
+    } finally {
+      setLoadingDrawings(false);
+    }
+  }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
+
+  // New function to set current drawing by ID
+  const setCurrentDrawingById = useCallback(
+    async (drawingId: string) => {
+      const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
+      if (!drawing) return;
+
+      // Clear current state
+      clearAudioState();
+      setRecommendations([]);
+
+      // Set new current drawing
+      setCurrentDrawing(drawing);
+    },
+    [allDrawings]
+  );
+
+  // Load initial drawings when user changes
+  useEffect(() => {
+    if (user?.id) {
+      setAllDrawings([]);
+      setDrawingsPage(0);
+      setHasMoreDrawings(true);
+      loadMoreDrawings();
+    }
+  }, [user?.id]);
 
   // Fetch current drawing
   useEffect(() => {
@@ -199,7 +302,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           (payload) => {
             console.log("drawing subscription triggered: ", payload);
             if (payload.new) {
-              setCurrentDrawing(payload.new as Tables<"drawings">);
+              const newDrawing = payload.new as Tables<"drawings">;
+              setCurrentDrawing(newDrawing);
+              // Add to beginning of all drawings list
+              setAllDrawings((prev) => [newDrawing, ...prev]);
             }
           }
         )
@@ -324,6 +430,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         currentDrawing,
         clearCurrentDrawing,
         recommendations,
+        allDrawings,
+        loadingDrawings,
+        hasMoreDrawings,
+        loadMoreDrawings,
+        setCurrentDrawingById,
         audioState,
         playAudio,
         togglePlayPause,
@@ -343,3 +454,5 @@ export function useMusic() {
   }
   return context;
 }
+
+export { getRelativeTime };
