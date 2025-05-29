@@ -1,7 +1,6 @@
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import Input from "@/components/input/input";
 import Output from "@/components/output/output";
+import Header from "@/components/header";
 import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -17,24 +16,13 @@ function App() {
             <AppSidebar />
             <SidebarTrigger />
             <div className="container mx-auto p-4">
-              <div className="flex justify-center mb-8">
-                <a href="https://vite.dev" target="_blank">
-                  <img src={viteLogo} className="logo" alt="Vite logo" />
-                </a>
-                <a href="https://react.dev" target="_blank">
-                  <img
-                    src={reactLogo}
-                    className="logo react"
-                    alt="React logo"
-                  />
-                </a>
-              </div>
+              <Header />
 
               <div className="flex justify-center gap-16 w-full">
                 <div className="max-w-md">
                   <Input />
                 </div>
-                <div className="max-w-md ">
+                <div className="max-w-md">
                   <Output />
                 </div>
               </div>
