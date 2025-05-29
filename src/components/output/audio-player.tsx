@@ -1,287 +1,24 @@
-import { useState, useRef, useEffect } from "react";
 import { Music, SkipForward, Pause, Play } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMusic } from "@/contexts/CurrentDrawingContext";
 
 interface AudioPlayerProps {
-  currentSongIndex: number | null;
+  currentSong: any;
+  isPlaying: boolean;
+  progress: number;
+  onPlayPause: () => void;
   onSkip: () => void;
-  shouldPlay: boolean;
-  className?: string;
-}
-
-// Initialize shared state on the window object if it doesn't exist
-if (!window.sharedAudioState) {
-  // Using type from global.d.ts
-  const initialAudioState: SharedAudioState = {
-    audioElement: null,
-    progressInterval: undefined,  // Use undefined instead of null for clearInterval compatibility
-    currentUrl: "",
-    currentTime: 0,
-    isPlaying: false,
-    progress: 0,
-  };
-  window.sharedAudioState = initialAudioState;
 }
 
 export function AudioPlayer({
-  currentSongIndex,
+  currentSong,
+  isPlaying,
+  progress,
+  onPlayPause,
   onSkip,
-  shouldPlay,
 }: AudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(
-    window.sharedAudioState?.isPlaying || false
-  );
-  const [progress, setProgress] = useState(
-    window.sharedAudioState?.progress || 0
-  );
-  const audioRef = useRef<HTMLAudioElement | null>(
-    window.sharedAudioState?.audioElement || null
-  );
-  const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(
-    window.sharedAudioState?.progressInterval
-  );
-
-  const { recommendations } = useMusic();
-
-  // Update shared music context with recommendations
-  if (!window.sharedMusicContext) {
-    window.sharedMusicContext = { recommendations };
-  } else {
-    window.sharedMusicContext.recommendations = recommendations;
-  }
-
-  const currentSong =
-    currentSongIndex !== null
-      ? recommendations[currentSongIndex]?.song?.full_track_data
-      : null;
-
-  const startProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const value =
-          (audioRef.current.currentTime / audioRef.current.duration) * 100;
-        const progressValue = isNaN(value) ? 0 : value;
-
-        // Update both local and shared state
-        setProgress(progressValue);
-
-        if (window.sharedAudioState) {
-          window.sharedAudioState.progress = progressValue;
-          window.sharedAudioState.currentTime = audioRef.current.currentTime;
-        }
-      }
-    }, 500);
-
-    // Update shared state with progress interval
-    if (window.sharedAudioState) {
-      window.sharedAudioState.progressInterval = progressIntervalRef.current;
-    }
-  };
-
-  const handlePlayPause = () => {
-    if (!audioRef.current && currentSong?.previewUrl) {
-      audioRef.current = new Audio(currentSong.previewUrl);
-
-      if (window.sharedAudioState) {
-        window.sharedAudioState.audioElement = audioRef.current;
-        window.sharedAudioState.currentUrl = currentSong.previewUrl;
-      }
-
-      audioRef.current.addEventListener("ended", onSkip);
-      audioRef.current.addEventListener("error", () => {
-        console.error("Error playing audio");
-        onSkip();
-      });
-
-      audioRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-          if (window.sharedAudioState) {
-            window.sharedAudioState.isPlaying = true;
-          }
-          startProgressTracking();
-        })
-        .catch((err: Error) => {
-          console.error("Playback failed:", err);
-          onSkip();
-        });
-      return;
-    }
-
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-
-        if (window.sharedAudioState) {
-          window.sharedAudioState.currentTime = audioRef.current.currentTime;
-          window.sharedAudioState.isPlaying = false;
-        }
-
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-          if (window.sharedAudioState) {
-            window.sharedAudioState.progressInterval = undefined;
-          }
-        }
-      } else {
-        audioRef.current.play();
-
-        if (window.sharedAudioState) {
-          window.sharedAudioState.isPlaying = true;
-        }
-
-        startProgressTracking();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      // Don't stop audio on unmount to allow audio to continue playing when switching tabs
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = undefined;
-      }
-    };
-  }, []);
-
-  // Sync with shared state on mount
-  useEffect(() => {
-    if (
-      window.sharedAudioState?.audioElement &&
-      window.sharedAudioState.isPlaying
-    ) {
-      audioRef.current = window.sharedAudioState.audioElement;
-      setIsPlaying(true);
-
-      // Update progress based on current playback
-      if (window.sharedAudioState?.progress) {
-        setProgress(window.sharedAudioState.progress);
-      } else {
-        const updateCurrentProgress = () => {
-          if (audioRef.current) {
-            const value =
-              (audioRef.current.currentTime / audioRef.current.duration) * 100;
-            const progressValue = isNaN(value) ? 0 : value;
-            setProgress(progressValue);
-
-            if (window.sharedAudioState) {
-              window.sharedAudioState.progress = progressValue;
-            }
-          }
-        };
-
-        // Update progress immediately
-        updateCurrentProgress();
-      }
-
-      // Start tracking if not already tracking
-      if (!progressIntervalRef.current) {
-        startProgressTracking();
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (shouldPlay && currentSong?.previewUrl) {
-      // Check if we already have an active audio element with the same URL
-      if (
-        window.sharedAudioState?.audioElement &&
-        window.sharedAudioState.currentUrl === currentSong.previewUrl
-      ) {
-        // Update local ref to point to the shared audio element
-        audioRef.current = window.sharedAudioState.audioElement;
-
-        // If it's paused, resume it
-        if (!window.sharedAudioState.isPlaying) {
-          audioRef.current
-            .play()
-            .then(() => {
-              setIsPlaying(true);
-              if (window.sharedAudioState) {
-                window.sharedAudioState.isPlaying = true;
-              }
-              startProgressTracking();
-            })
-            .catch((err: Error) => {
-              console.error("Playback failed on resume:", err);
-            });
-        } else {
-          // It's already playing, just update local state
-          setIsPlaying(true);
-          if (window.sharedAudioState.progress) {
-            setProgress(window.sharedAudioState.progress);
-          }
-        }
-      } else {
-        // Either no audio element exists or it's playing something else
-        // Clean up any existing audio
-        if (window.sharedAudioState?.audioElement) {
-          window.sharedAudioState.audioElement.pause();
-          window.sharedAudioState.audioElement.removeEventListener(
-            "ended",
-            onSkip
-          );
-        }
-
-        if (
-          progressIntervalRef.current ||
-          window.sharedAudioState?.progressInterval
-        ) {
-          // Check for interval before clearing to avoid null error
-          const intervalToClean = progressIntervalRef.current || window.sharedAudioState?.progressInterval;
-          if (intervalToClean) {
-            clearInterval(intervalToClean);
-          }
-          progressIntervalRef.current = undefined;
-          if (window.sharedAudioState) {
-            window.sharedAudioState.progressInterval = undefined;
-          }
-        }
-
-        // Create a new audio element
-        audioRef.current = new Audio(currentSong.previewUrl);
-        if (window.sharedAudioState) {
-          window.sharedAudioState.audioElement = audioRef.current;
-          window.sharedAudioState.currentUrl = currentSong.previewUrl;
-          window.sharedAudioState.progress = 0;
-        }
-
-        setProgress(0);
-
-        audioRef.current.addEventListener("ended", onSkip);
-        audioRef.current.addEventListener("error", () => {
-          console.error("Error playing audio");
-          onSkip();
-        });
-
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-            if (window.sharedAudioState) {
-              window.sharedAudioState.isPlaying = true;
-            }
-            startProgressTracking();
-          })
-          .catch((err: Error) => {
-            console.error("Playback failed:", err);
-            onSkip();
-          });
-      }
-    }
-  }, [currentSong, shouldPlay]);
-
   if (!currentSong) {
     return <AudioPlayerSkeleton />;
   }
@@ -320,7 +57,7 @@ export function AudioPlayer({
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={handlePlayPause}
+                onClick={onPlayPause}
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />

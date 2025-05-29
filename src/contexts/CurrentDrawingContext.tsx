@@ -4,10 +4,24 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
+interface AudioState {
+  currentSongIndex: number | null;
+  isPlaying: boolean;
+  progress: number;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
+  progressIntervalRef: React.RefObject<NodeJS.Timeout | undefined>;
+}
+
 interface MusicContextType {
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;
   recommendations: RecommendationWithSong[];
+  // Audio state and controls
+  audioState: AudioState;
+  playAudio: (songIndex: number) => void;
+  togglePlayPause: () => void;
+  skipToNext: () => void;
+  setProgress: (progress: number) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -22,33 +36,108 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   >([]);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
+  // Audio state
+  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const audioState: AudioState = {
+    currentSongIndex,
+    isPlaying,
+    progress,
+    audioRef,
+    progressIntervalRef,
+  };
+
+  const startProgressTracking = () => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    progressIntervalRef.current = setInterval(() => {
+      if (audioRef.current) {
+        const value =
+          (audioRef.current.currentTime / audioRef.current.duration) * 100;
+        setProgress(isNaN(value) ? 0 : value);
+      }
+    }, 500);
+  };
+
+  const playAudio = async (songIndex: number) => {
+    const song = recommendations[songIndex]?.song?.full_track_data;
+    if (!song?.previewUrl) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    audioRef.current = new Audio(song.previewUrl);
+    setCurrentSongIndex(songIndex);
+    setProgress(0);
+
+    audioRef.current.addEventListener("ended", skipToNext);
+    audioRef.current.addEventListener("error", skipToNext);
+
+    try {
+      await audioRef.current.play();
+      setIsPlaying(true);
+      startProgressTracking();
+    } catch (err) {
+      console.error("Playback failed:", err);
+      skipToNext();
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) {
+      if (currentSongIndex !== null) {
+        playAudio(currentSongIndex);
+      } else if (recommendations.length > 0) {
+        playAudio(0);
+      }
+      return;
+    }
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    } else {
+      audioRef.current.play();
+      startProgressTracking();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const skipToNext = () => {
+    const nextIndex = currentSongIndex !== null ? currentSongIndex + 1 : 0;
+    if (nextIndex >= recommendations.length) {
+      playAudio(0);
+    } else {
+      playAudio(nextIndex);
+    }
+  };
+
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
 
-    // Update shared music context
-    if (!window.sharedMusicContext) {
-      window.sharedMusicContext = { recommendations: [] };
-    } else {
-      window.sharedMusicContext.recommendations = [];
+    // Clear audio state
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
     }
-
-    // Also clear audio state when clearing the drawing
-    if (window.sharedAudioState) {
-      if (window.sharedAudioState.audioElement) {
-        window.sharedAudioState.audioElement.pause();
-        window.sharedAudioState.audioElement = null;
-      }
-      if (window.sharedAudioState.progressInterval) {
-        clearInterval(window.sharedAudioState.progressInterval);
-        window.sharedAudioState.progressInterval = null;
-      }
-      window.sharedAudioState.isPlaying = false;
-      window.sharedAudioState.currentUrl = "";
-      window.sharedAudioState.currentTime = 0;
-      window.sharedAudioState.progress = 0;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = undefined;
     }
+    setCurrentSongIndex(null);
+    setIsPlaying(false);
+    setProgress(0);
   };
 
   // Fetch current drawing
@@ -105,13 +194,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     async function fetchRecommendations() {
       if (!currentDrawing?.drawing_id) return;
 
-      // Debug the query
       console.log(
         "Querying recommendations for drawing ID:",
         currentDrawing.drawing_id
       );
 
-      // Try to query without specifying the foreign key column
       const { data, error } = await supabase
         .from("recommendations")
         .select(
@@ -141,7 +228,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
       console.log("Recommendations data:", data);
 
-      // Normalize data structure for consistent format
       const normalizedData = data
         .map((item) => {
           if (!item.songs) {
@@ -158,19 +244,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         .filter(Boolean) as RecommendationWithSong[];
 
       setRecommendations(normalizedData);
-
-      // Update the shared music context
-      if (!window.sharedMusicContext) {
-        window.sharedMusicContext = { recommendations: normalizedData };
-      } else {
-        window.sharedMusicContext.recommendations = normalizedData;
-      }
     }
 
     fetchRecommendations();
 
     if (currentDrawing?.drawing_id) {
-      // Debug the shape of the data
       console.log("Current drawing:", currentDrawing);
 
       const channel = supabase
@@ -206,12 +284,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [currentDrawing?.id]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, []);
+
   return (
     <MusicContext.Provider
       value={{
         currentDrawing,
         clearCurrentDrawing,
         recommendations,
+        audioState,
+        playAudio,
+        togglePlayPause,
+        skipToNext,
+        setProgress,
       }}
     >
       {children}
