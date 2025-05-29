@@ -4,10 +4,6 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
-// Window interface extended in vite-env.d.ts
-
-// Type definitions moved to vite-env.d.ts
-
 interface MusicContextType {
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;

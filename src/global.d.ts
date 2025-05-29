@@ -27,7 +27,7 @@ interface RecommendationWithSong {
 // Audio state shared across components
 interface SharedAudioState {
   audioElement: HTMLAudioElement | null;
-  progressInterval: NodeJS.Timeout | null;
+  progressInterval: NodeJS.Timeout | undefined;  // Changed from null to undefined for clearInterval compatibility
   currentUrl: string;
   currentTime: number;
   isPlaying: boolean;

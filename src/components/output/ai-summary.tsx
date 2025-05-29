@@ -27,7 +27,7 @@ export function AISummary() {
 
   return (
     <ScrollArea className="h-[102px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide">
-      <CardDescription className="text-sm">{currentDrawing?.ai_message}</CardDescription>
+      <CardDescription>{currentDrawing?.ai_message}</CardDescription>
     </ScrollArea>
   );
 }
