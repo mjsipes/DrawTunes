@@ -23,7 +23,7 @@ export default function DrawCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canvasColor, setCanvasColor] = useState("#FFFFFF");
-  const { clearCurrentDrawing, currentDrawing } = useMusic();
+  const { clearCurrentDrawing } = useMusic();
 
   // Update canvas color when theme changes
   useEffect(() => {
