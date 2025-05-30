@@ -1,54 +1,33 @@
-# React + TypeScript + Vite
+## DrawTunes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Live App: https://drawtunes.vercel.app/**
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### The Journey Behind the Tech
+In the fall of 2024 I went to the HackSC hackathon at my university. One of my friends roomates Noah Pinale created an application called sketchtune 
+https://sketchtune.vercel.app/
+https://github.com/noahpin/sketchtune
 
-## Expanding the ESLint configuration
+I thought this app was such a good idea for a hackathon, I thought it was so cool. And I wondered a lot about how he did it. 8 months later, after spending a lot of time working with supabase database and edgefunctions, i finished this last semester looking back on his project and thinking i could actually probably make it myself. That is what I wanted to do. 
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+My emphasis for this project was design. I saw a youtube video from ycombinator a few months ago explaing that going forward, good design for websites will be incredibly important. In my last project around typeracer my focus was on the underlying technology. I saw the webpages as just something I had to do to complete the project. 
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+This project I wanted everythign to be about the user experience with the interface. 
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+I used a reuasable component library called shadcn to build the application. I emphasised simplicity.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+What stayed the same
+react, supabase, vercel
+What was new
+css->tailwind +shadcnui
+javascript->typescript
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+
+New things / problems I learned. react usecontext / statemanegment. embedded components / large component tree.
+why? because how do i synchronize state between the components. i could fetch from the database, but then i want it to be loading after you click the button.
+### Technical Evolution
+### Cool Features I've Built
+### What's Next
+profile my code
+migrate from react context to zustand
+FIGURE OUt how to break up and test every part of the code.

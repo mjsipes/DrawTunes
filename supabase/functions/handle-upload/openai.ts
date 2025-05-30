@@ -8,16 +8,8 @@ export async function generateMusicRecommendations(imageUrl: string) {
 
     const num_songs = 5;
 
-    const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "text",
-                        text:
-                            `Analyze this image and choose ONE specific musical direction to focus on. Pick from these approaches:
+    const prompt =
+        `Analyze this image and choose ONE specific musical direction to focus on. Pick from these approaches:
 
 1. If it's a person: Choose either their most popular hits OR their deep cuts/B-sides OR similar artists in their genre
 2. If it's a scene/mood: Pick a specific genre that matches (indie folk, synthwave, jazz, etc.)
@@ -48,7 +40,17 @@ RULES:
 - No markdown formatting
 - All ${num_songs} songs must fit your chosen theme
 - Be bold and specific, not generic
-- Valid JSON that works with JSON.parse()`,
+- Valid JSON that works with JSON.parse()`;
+
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+            {
+                role: "user",
+                content: [
+                    {
+                        type: "text",
+                        text: prompt,
                     },
                     {
                         type: "image_url",
