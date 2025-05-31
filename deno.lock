@@ -1,6 +1,7 @@
 {
   "version": "4",
   "specifiers": {
+    "jsr:@openai/openai@*": "4.98.0",
     "jsr:@openai/openai@^4.98.0": "4.98.0",
     "npm:@eslint/js@^9.25.0": "9.26.0",
     "npm:@radix-ui/react-dialog@^1.1.14": "1.1.14_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
@@ -2750,6 +2751,12 @@
       "integrity": "sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg=="
     }
   },
+  "remote": {
+    "https://deno.land/std@0.220.1/dotenv/load.ts": "587b342f0f6a3df071331fe6ba1c823729ab68f7d53805809475e486dd4161d7",
+    "https://deno.land/std@0.220.1/dotenv/mod.ts": "0180eaeedaaf88647318811cdaa418cc64dc51fb08354f91f5f480d0a1309f7d",
+    "https://deno.land/std@0.220.1/dotenv/parse.ts": "09977ff88dfd1f24f9973a338f0f91bbdb9307eb5ff6085446e7c423e4c7ba0c",
+    "https://deno.land/std@0.220.1/dotenv/stringify.ts": "0047ad7068289735d08964046aea267a750c141b494ca0e38831b89be6c020c2"
+  },
   "workspace": {
     "dependencies": [
       "jsr:@openai/openai@^4.98.0"
@@ -2758,6 +2765,7 @@
       "dependencies": [
         "npm:@eslint/js@^9.25.0",
         "npm:@radix-ui/react-dialog@^1.1.14",
+        "npm:@radix-ui/react-dropdown-menu@^2.1.15",
         "npm:@radix-ui/react-label@^2.1.6",
         "npm:@radix-ui/react-menubar@^1.1.14",
         "npm:@radix-ui/react-progress@^1.1.6",
@@ -2783,6 +2791,7 @@
         "npm:lucide-react@0.511",
         "npm:react-dom@^19.1.0",
         "npm:react-dropzone@^14.3.8",
+        "npm:react-icons@^5.5.0",
         "npm:react-sketch-canvas@^6.2.0",
         "npm:react@^19.1.0",
         "npm:supabase@^2.22.12",

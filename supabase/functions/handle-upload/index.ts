@@ -1,41 +1,8 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { generateMusicRecommendations } from "./openai.ts";
-
+import { searchTrack } from "./itunes.ts";
 const IMAGE_URL =
   "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/";
-
-// iTunes API search function
-async function searchTrack(title: string, artist: string) {
-  const query = encodeURIComponent(`${title} ${artist}`);
-  const url =
-    `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    return {
-      success: false,
-      error: `iTunes search failed: ${response.status}`,
-      query: `${title} ${artist}`,
-    };
-  }
-
-  const data = await response.json();
-
-  if (data.results && data.results.length > 0) {
-    return {
-      success: true,
-      query: `${title} ${artist}`,
-      track: data.results[0],
-    };
-  } else {
-    return {
-      success: false,
-      query: `${title} ${artist}`,
-      error: `No results found for "${title}" by ${artist}`,
-    };
-  }
-}
 
 Deno.serve(async (req) => {
   try {
