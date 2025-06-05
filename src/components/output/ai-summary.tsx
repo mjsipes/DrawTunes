@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function AISummarySkeleton() {
   return (
-    <ScrollArea className="h-[102px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide">
+    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
       <div className="space-y-2">
         <Skeleton className="h-3.5 w-full" />
         <Skeleton className="h-3.5 w-[95%]" />
@@ -26,7 +26,7 @@ export function AISummary() {
   }
 
   return (
-    <ScrollArea className="h-[102px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide">
+    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
       <CardDescription>{currentDrawing?.ai_message}</CardDescription>
     </ScrollArea>
   );

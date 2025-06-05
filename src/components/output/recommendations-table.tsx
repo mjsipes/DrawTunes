@@ -130,8 +130,8 @@ export function RecommendationsTable({
                 return (
                   <TableRow
                     key={rec.id}
-                    className={`cursor-pointer hover:bg-slate-50 ${
-                      isCurrentSong ? "bg-slate-100" : ""
+                    className={`cursor-pointer hover:bg-muted ${
+                      isCurrentSong ? "bg-accent" : ""
                     }`}
                     onClick={() => onSongSelect(index)}
                   >

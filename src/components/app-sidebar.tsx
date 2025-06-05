@@ -117,7 +117,7 @@ export function AppSidebar() {
       <SidebarContent ref={scrollRef} className="overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-2 py-4">
-            DrawTunes
+            Recents
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
