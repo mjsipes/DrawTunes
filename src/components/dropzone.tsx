@@ -97,7 +97,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
     if (isSuccess) {
       clearCurrentDrawing();
     }
-  }, [isSuccess, clearCurrentDrawing]);
+  }, [isSuccess]);
 
   const handleRemoveFile = useCallback(
     (fileName: string) => {
