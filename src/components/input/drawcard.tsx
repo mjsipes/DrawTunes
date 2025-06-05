@@ -24,6 +24,7 @@ export default function DrawCard() {
   const [error, setError] = useState<string | null>(null);
   const [canvasColor, setCanvasColor] = useState("#FFFFFF");
   const { clearCurrentDrawing } = useMusic();
+  const { backgroundImage } = useMusic();
 
   // Update canvas color when theme changes
   useEffect(() => {
@@ -98,6 +99,7 @@ export default function DrawCard() {
               strokeWidth={4}
               strokeColor={strokeColor}
               canvasColor={canvasColor}
+              backgroundImage={backgroundImage ?? undefined}
             />
           </div>
           <div className="flex justify-between items-center w-full">

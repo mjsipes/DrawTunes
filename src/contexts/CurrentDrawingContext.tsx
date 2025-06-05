@@ -57,6 +57,7 @@ interface MusicContextType {
   togglePlayPause: () => void;
   skipToNext: () => void;
   setProgress: (progress: number) => void;
+  backgroundImage: string | null;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -85,6 +86,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
 
   const audioState: AudioState = {
     currentSongIndex,
@@ -233,12 +236,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       // Clear current state
       clearAudioState();
       setRecommendations([]);
+      setBackgroundImage(drawing.drawing_url);
 
       // Set new current drawing
       setCurrentDrawing(drawing);
     },
     [allDrawings]
   );
+
+  // useEffect(() => {
+  //   setBackgroundImage(
+  //     "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/drawings/drawings/upload-1749148144880-grslof.webp"
+  //   );
+  // }, [currentDrawing]);
 
   // Load initial drawings when user changes
   useEffect(() => {
@@ -425,6 +435,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         togglePlayPause,
         skipToNext,
         setProgress,
+        backgroundImage,
       }}
     >
       {children}
