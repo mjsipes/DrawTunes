@@ -19,7 +19,7 @@ function AISummarySkeleton() {
 export function AISummary() {
   const { currentDrawing } = useMusic();
 
-  console.log("AISummary render - currentDrawing:", currentDrawing);
+  // console.log("AISummary render - currentDrawing:", currentDrawing);
 
   if (!currentDrawing) {
     return <AISummarySkeleton />;

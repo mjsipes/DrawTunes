@@ -27,6 +27,8 @@ export default function DrawCard() {
   const { backgroundImage, clearBackgroundImage } = useMusic();
   const { registerCanvasClear } = useMusic();
 
+  // console.log("DrawCard render - backgroundImage:", backgroundImage);
+
   useEffect(() => {
     registerCanvasClear(() => {
       if (canvasRef.current) {
