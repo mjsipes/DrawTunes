@@ -69,20 +69,20 @@ function RecommendationsSkeleton() {
             {Array.from({ length: 5 }).map((_, index) => (
               <TableRow key={index}>
                 <TableCell className="text-center">
-                  <Skeleton className="h-4 w-4 mx-auto" />
+                  <Skeleton className="h-4 w-4 mx-auto bg-red-500" />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <Skeleton className="w-8 h-8 rounded-sm" />
-                    <Skeleton className="h-4 w-[130px]" />
+                    <Skeleton className="w-8 h-8 rounded-sm bg-red-500" />
+                    <Skeleton className="h-4 w-[130px] bg-red-500" />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-[100px]" />
+                  <Skeleton className="h-4 w-[100px] bg-red-500" />
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end pr-2">
-                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-4 bg-red-500" />
                   </div>
                 </TableCell>
               </TableRow>
@@ -98,11 +98,12 @@ export function RecommendationsTable({
   currentSongIndex,
   onSongSelect,
 }: RecommendationsTableProps) {
-  const { currentDrawing, recommendations } = useMusic();
+  const { recommendations } = useMusic();
 
-  if (!currentDrawing) {
-    return <RecommendationsSkeleton />;
-  }
+  // const { currentDrawing, recommendations } = useMusic();
+  // if (!currentDrawing || recommendations.length === 0) {
+  //   return <RecommendationsSkeleton />;
+  // }
 
   const skeletonRowsCount = Math.max(0, 5 - recommendations.length);
 
