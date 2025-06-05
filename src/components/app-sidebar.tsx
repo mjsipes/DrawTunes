@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMusic, getRelativeTime } from "@/contexts/CurrentDrawingContext";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
+import { getRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface DrawingItemProps {
