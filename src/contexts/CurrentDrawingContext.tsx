@@ -58,6 +58,9 @@ interface MusicContextType {
   skipToNext: () => void;
   setProgress: (progress: number) => void;
   backgroundImage: string | null;
+  clearBackgroundImage: () => void;
+  clearCanvas: () => void;
+  registerCanvasClear: (clearFn: () => void) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
@@ -88,6 +91,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
+  const clearBackgroundImage = () => {
+    setBackgroundImage(null);
+  };
 
   const audioState: AudioState = {
     currentSongIndex,
@@ -227,28 +234,31 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
 
-  // New function to set current drawing by ID
+  const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
+
+  const registerCanvasClear = useCallback((clearFn: () => void) => {
+    setCanvasClearFn(() => clearFn);
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    if (canvasClearFn) {
+      canvasClearFn();
+    }
+  }, [canvasClearFn]);
+
   const setCurrentDrawingById = useCallback(
     async (drawingId: string) => {
       const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
       if (!drawing) return;
 
-      // Clear current state
       clearAudioState();
       setRecommendations([]);
       setBackgroundImage(drawing.drawing_url);
-
-      // Set new current drawing
+      clearCanvas(); // Clear the canvas strokes
       setCurrentDrawing(drawing);
     },
-    [allDrawings]
+    [allDrawings, clearCanvas]
   );
-
-  // useEffect(() => {
-  //   setBackgroundImage(
-  //     "https://efaxdvjankrzmrmhbpxr.supabase.co/storage/v1/object/public/drawings/drawings/upload-1749148144880-grslof.webp"
-  //   );
-  // }, [currentDrawing]);
 
   // Load initial drawings when user changes
   useEffect(() => {
@@ -436,6 +446,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         skipToNext,
         setProgress,
         backgroundImage,
+        clearCanvas,
+        registerCanvasClear,
+        clearBackgroundImage,
       }}
     >
       {children}
