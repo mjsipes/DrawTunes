@@ -1,1 +1,0 @@
-deno run --allow-net --allow-read --allow-env handle-upload/test.ts

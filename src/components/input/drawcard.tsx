@@ -24,6 +24,16 @@ export default function DrawCard() {
   const [error, setError] = useState<string | null>(null);
   const [canvasColor, setCanvasColor] = useState("#FFFFFF");
   const { clearCurrentDrawing } = useMusic();
+  const { backgroundImage, clearBackgroundImage } = useMusic();
+  const { registerCanvasClear } = useMusic();
+
+  useEffect(() => {
+    registerCanvasClear(() => {
+      if (canvasRef.current) {
+        canvasRef.current.clearCanvas();
+      }
+    });
+  }, [registerCanvasClear]);
 
   // Update canvas color when theme changes
   useEffect(() => {
@@ -46,18 +56,74 @@ export default function DrawCard() {
     setError(null);
 
     try {
-      // 1. Export canvas as a PNG data URL
-      const dataUrl = await canvasRef.current.exportImage("png");
+      // Create a new canvas to composite the background and drawing
+      const compositeCanvas = document.createElement("canvas");
+      const ctx = compositeCanvas.getContext("2d");
 
-      // 2. Convert data URL to a Blob
-      const fetchResponse = await fetch(dataUrl);
-      const blob = await fetchResponse.blob();
+      if (!ctx) throw new Error("Could not get canvas context");
 
-      // 3. Generate a unique filename
+      // Set canvas dimensions (match your ReactSketchCanvas dimensions)
+      compositeCanvas.width = 400; // Adjust to match your canvas width
+      compositeCanvas.height = 256; // Adjust to match your canvas height (h-64 = 256px)
+
+      // Fill with canvas background color
+      ctx.fillStyle = canvasColor;
+      ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
+
+      // Draw background image if it exists
+      if (backgroundImage) {
+        const bgImg = new Image();
+        bgImg.crossOrigin = "anonymous";
+
+        await new Promise((resolve, reject) => {
+          bgImg.onload = () => {
+            ctx.drawImage(
+              bgImg,
+              0,
+              0,
+              compositeCanvas.width,
+              compositeCanvas.height
+            );
+            resolve(undefined);
+          };
+          bgImg.onerror = reject;
+          bgImg.src = backgroundImage;
+        });
+      }
+
+      // Export the drawing from ReactSketchCanvas (transparent background)
+      const drawingDataUrl = await canvasRef.current.exportImage("png");
+      const drawingImg = new Image();
+
+      await new Promise((resolve, reject) => {
+        drawingImg.onload = () => {
+          // Draw the sketch on top of the background
+          ctx.drawImage(
+            drawingImg,
+            0,
+            0,
+            compositeCanvas.width,
+            compositeCanvas.height
+          );
+          resolve(undefined);
+        };
+        drawingImg.onerror = reject;
+        drawingImg.src = drawingDataUrl;
+      });
+
+      // Convert composite canvas to blob
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        compositeCanvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Failed to create blob"));
+        }, "image/png");
+      });
+
+      // Generate a unique filename
       const fileName = `drawing-${Date.now()}.png`;
       const filePath = `drawings/${fileName}`;
 
-      // 4. Upload the blob to Supabase
+      // Upload the blob to Supabase
       const { data, error: uploadError } = await supabase.storage
         .from("drawings")
         .upload(filePath, blob, {
@@ -67,7 +133,7 @@ export default function DrawCard() {
 
       if (uploadError) throw uploadError;
 
-      // 5. Get public URL for the uploaded file
+      // Get public URL for the uploaded file
       const { data: publicUrlData } = supabase.storage
         .from("drawings")
         .getPublicUrl(data?.path || "");
@@ -98,6 +164,7 @@ export default function DrawCard() {
               strokeWidth={4}
               strokeColor={strokeColor}
               canvasColor={canvasColor}
+              backgroundImage={backgroundImage ?? undefined}
             />
           </div>
           <div className="flex justify-between items-center w-full">
@@ -108,6 +175,8 @@ export default function DrawCard() {
                 onClick={() => {
                   if (canvasRef.current) {
                     canvasRef.current.clearCanvas();
+                    //clear background image
+                    clearBackgroundImage();
                   }
                 }}
               >

@@ -57,26 +57,15 @@ interface MusicContextType {
   togglePlayPause: () => void;
   skipToNext: () => void;
   setProgress: (progress: number) => void;
+  backgroundImage: string | null;
+  clearBackgroundImage: () => void;
+  clearCanvas: () => void;
+  registerCanvasClear: (clearFn: () => void) => void;
 }
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
 const DRAWINGS_PER_PAGE = 15;
-
-// Helper function for relative time
-const getRelativeTime = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800)
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
-
-  return date.toLocaleDateString();
-};
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
@@ -100,6 +89,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+
+  const clearBackgroundImage = () => {
+    setBackgroundImage(null);
+  };
 
   const audioState: AudioState = {
     currentSongIndex,
@@ -239,20 +234,30 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
 
-  // New function to set current drawing by ID
+  const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
+
+  const registerCanvasClear = useCallback((clearFn: () => void) => {
+    setCanvasClearFn(() => clearFn);
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    if (canvasClearFn) {
+      canvasClearFn();
+    }
+  }, [canvasClearFn]);
+
   const setCurrentDrawingById = useCallback(
     async (drawingId: string) => {
       const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
       if (!drawing) return;
 
-      // Clear current state
       clearAudioState();
       setRecommendations([]);
-
-      // Set new current drawing
+      setBackgroundImage(drawing.drawing_url);
+      clearCanvas(); // Clear the canvas strokes
       setCurrentDrawing(drawing);
     },
-    [allDrawings]
+    [allDrawings, clearCanvas]
   );
 
   // Load initial drawings when user changes
@@ -440,6 +445,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         togglePlayPause,
         skipToNext,
         setProgress,
+        backgroundImage,
+        clearCanvas,
+        registerCanvasClear,
+        clearBackgroundImage,
       }}
     >
       {children}
@@ -454,5 +463,3 @@ export function useMusic() {
   }
   return context;
 }
-
-export { getRelativeTime };

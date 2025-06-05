@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMusic, getRelativeTime } from "@/contexts/CurrentDrawingContext";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
+import { getRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface DrawingItemProps {
@@ -116,7 +117,7 @@ export function AppSidebar() {
       <SidebarContent ref={scrollRef} className="overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel className="text-lg font-bold px-2 py-4">
-            DrawTunes
+            Recents
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
