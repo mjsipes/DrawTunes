@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@openai/openai@*": "4.98.0",
     "jsr:@openai/openai@^4.98.0": "4.98.0",
+    "jsr:@supabase/supabase-js@2": "2.49.4",
     "npm:@eslint/js@^9.25.0": "9.26.0",
     "npm:@radix-ui/react-dialog@^1.1.14": "1.1.14_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
     "npm:@radix-ui/react-label@^2.1.6": "2.1.6_@types+react@19.1.3_@types+react-dom@19.1.3__@types+react@19.1.3_react@19.1.0_react-dom@19.1.0__react@19.1.0",
@@ -48,6 +49,9 @@
       "dependencies": [
         "npm:zod"
       ]
+    },
+    "@supabase/supabase-js@2.49.4": {
+      "integrity": "4b785f9cd4a62feb7b3f84606bb923a4ea51e3e000eafff0972bc779240b7592"
     }
   },
   "npm": {
