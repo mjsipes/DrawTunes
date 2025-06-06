@@ -1,3 +1,8 @@
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
+
+// Setup type definitions for built-in Supabase Runtime APIs
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { get_song_recommendations_openai } from "./openai.ts";
 import { get_itunes_data } from "./itunes.ts";
@@ -6,7 +11,7 @@ const IMAGE_URL =
 
 Deno.serve(async (req) => {
   try {
-    console.log("hello from handle-upload function");
+    console.log("hello from get-song-recommendations function");
 
     //=========================== INITIALIZATION ===========================//
     const supabase = createClient(
@@ -60,8 +65,11 @@ Deno.serve(async (req) => {
     //========================= ITUNES LOOKUP ==========================//
     let itunesResults;
     try {
+      // Define the type for a song object
+      type Song = { title: string; artist: string };
+
       // Search for each song in parallel
-      const searchPromises = songs.map((song) =>
+      const searchPromises = (songs as Song[]).map((song: Song) =>
         get_itunes_data(song.title, song.artist)
       );
 
@@ -79,7 +87,9 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: "Failed to process iTunes request",
-          details: e.message,
+          details: typeof e === "object" && e !== null && "message" in e
+            ? (e as { message: string }).message
+            : String(e),
         }),
         {
           status: 500,
@@ -167,7 +177,9 @@ Deno.serve(async (req) => {
           console.error("Exception processing track:", e);
           errors.push({
             track: trackData.trackName,
-            error: e.message,
+            error: e && typeof e === "object" && "message" in e
+              ? (e as { message: string }).message
+              : String(e),
           });
         }
       }
@@ -196,3 +208,15 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/get-song-recommendations' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"name":"Functions"}'
+
+*/

@@ -1,5 +1,5 @@
 // iTunes API search function
-export async function searchTrack(title: string, artist: string) {
+export async function get_itunes_data(title: string, artist: string) {
     const query = encodeURIComponent(`${title} ${artist}`);
     const url =
         `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`;
