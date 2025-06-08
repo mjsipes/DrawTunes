@@ -52,58 +52,15 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   return null;
 };
 
-// function RecommendationsSkeleton() {
-//   return (
-//     <Card className="py-0">
-//       <CardContent className="p-0">
-//         <Table className="border-collapse table-fixed w-full">
-//           <TableHeader>
-//             <TableRow>
-//               <TableHead className="w-[30px] text-center">#</TableHead>
-//               <TableHead className="w-[180px]">Track</TableHead>
-//               <TableHead className="w-[100px]">Artist</TableHead>
-//               <TableHead className="w-[30px] text-right"></TableHead>
-//             </TableRow>
-//           </TableHeader>
-//           <TableBody>
-//             {Array.from({ length: 5 }).map((_, index) => (
-//               <TableRow key={index}>
-//                 <TableCell className="text-center">
-//                   <Skeleton className="h-4 w-4 mx-auto bg-red-500" />
-//                 </TableCell>
-//                 <TableCell>
-//                   <div className="flex items-center gap-2">
-//                     <Skeleton className="w-8 h-8 rounded-sm bg-red-500" />
-//                     <Skeleton className="h-4 w-[130px] bg-red-500" />
-//                   </div>
-//                 </TableCell>
-//                 <TableCell>
-//                   <Skeleton className="h-4 w-[100px] bg-red-500" />
-//                 </TableCell>
-//                 <TableCell className="text-right">
-//                   <div className="flex justify-end pr-2">
-//                     <Skeleton className="h-4 w-4 bg-red-500" />
-//                   </div>
-//                 </TableCell>
-//               </TableRow>
-//             ))}
-//           </TableBody>
-//         </Table>
-//       </CardContent>
-//     </Card>
-//   );
-// }
 
-export function RecommendationsTable({
-  currentSongIndex,
-  onSongSelect,
-}: RecommendationsTableProps) {
-  const { recommendations } = useMusic();
+export function RecommendationsTable() {
+    const {
+    playAudio,
+    audioState,
+    recommendations
+  } = useMusic();
 
-  // const { currentDrawing, recommendations } = useMusic();
-  // if (!currentDrawing || recommendations.length === 0) {
-  //   return <RecommendationsSkeleton />;
-  // }
+
 
   const skeletonRowsCount = Math.max(0, 5 - recommendations.length);
 
@@ -125,7 +82,7 @@ export function RecommendationsTable({
                 const trackData = rec.song?.full_track_data;
                 if (!trackData) return null;
 
-                const isCurrentSong = currentSongIndex === index;
+                const isCurrentSong = audioState.currentSongIndex === index;
 
                 return (
                   <TableRow
@@ -133,7 +90,7 @@ export function RecommendationsTable({
                     className={`cursor-pointer hover:bg-muted ${
                       isCurrentSong ? "bg-accent" : ""
                     }`}
-                    onClick={() => onSongSelect(index)}
+                    onClick={() => playAudio(index)}
                   >
                     <TableCell className="w-[30px] text-center text-sm">
                       {isCurrentSong ? (
