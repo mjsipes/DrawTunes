@@ -1,4 +1,3 @@
-import Input from "@/components/input/input";
 import Header from "@/components/header";
 import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -8,6 +7,9 @@ import { MusicProvider } from "@/contexts/CurrentDrawingContext";
 import { AudioPlayer } from "@/components/audio-player";
 import { RecommendationsTable } from "@/components/recommendations-table";
 import { AISummary } from "@/components/ai-summary";
+import DrawCard from "@/components/drawcard";
+import UploadCard from "@/components/uploadcard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function App() {
   return (
@@ -22,7 +24,18 @@ function App() {
 
               <div className="flex flex-col md:flex-row justify-center gap-8 md:gap-16 w-full">
                 <div className="max-w-md">
-                  <Input />
+                      <Tabs defaultValue="draw" className="w-[500px]">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="draw">Draw</TabsTrigger>
+        <TabsTrigger value="upload">Upload</TabsTrigger>
+      </TabsList>
+      <TabsContent value="draw">
+        <DrawCard />
+      </TabsContent>
+      <TabsContent value="upload">
+        <UploadCard />
+      </TabsContent>
+    </Tabs>
                 </div>
                 <div className="max-w-md">
                   <div className="w-[450px] space-y-2">
