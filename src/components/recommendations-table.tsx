@@ -36,11 +36,6 @@ interface RecommendationWithSong {
   };
 }
 
-interface RecommendationsTableProps {
-  currentSongIndex: number | null;
-  onSongSelect: (index: number) => void;
-}
-
 const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
   const artworkKey = `artworkUrl${size}` as keyof iTunesTrack;
   if (song?.[artworkKey]) {
