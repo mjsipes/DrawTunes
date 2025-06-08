@@ -1,5 +1,11 @@
 {
   "imports": {
-    "@openai/openai": "jsr:@openai/openai@^4.98.0"
-  }
+    "@openai/openai": "jsr:@openai/openai@^4.98.0",
+    "@/": "./src/"
+  },
+  "exclude": [
+    "src/",
+    "node_modules/",
+    "dist/"
+  ]
 }
