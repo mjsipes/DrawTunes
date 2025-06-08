@@ -3,22 +3,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMusic } from "@/contexts/CurrentDrawingContext";
 
-interface AudioPlayerProps {
-  currentSong: any;
-  isPlaying: boolean;
-  progress: number;
-  onPlayPause: () => void;
-  onSkip: () => void;
-}
 
-export function AudioPlayer({
-  currentSong,
-  isPlaying,
-  progress,
-  onPlayPause,
-  onSkip,
-}: AudioPlayerProps) {
+
+export function AudioPlayer() {
+
+    const { recommendations, audioState, togglePlayPause, skipToNext } =
+      useMusic();
+
+      const currentSong =
+    audioState.currentSongIndex !== null
+      ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
+      : recommendations[0]?.song?.full_track_data; // Add this fallback
+
+
+
   if (!currentSong) {
     return <AudioPlayerSkeleton />;
   }
@@ -57,9 +57,9 @@ export function AudioPlayer({
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={onPlayPause}
+                onClick={togglePlayPause}
               >
-                {isPlaying ? (
+                {audioState.isPlaying ? (
                   <Pause className="h-4 w-4" />
                 ) : (
                   <Play className="h-4 w-4" />
@@ -69,13 +69,13 @@ export function AudioPlayer({
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={onSkip}
+                onClick={skipToNext}
               >
                 <SkipForward className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <Progress value={progress} className="h-1 w-full" />
+          <Progress value={audioState.progress} className="h-1 w-full" />
         </div>
       </CardContent>
     </Card>
