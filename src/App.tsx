@@ -1,11 +1,13 @@
 import Input from "@/components/input/input";
-import Output from "@/components/output/output";
 import Header from "@/components/header";
 import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MusicProvider } from "@/contexts/CurrentDrawingContext";
+import { AudioPlayer } from "@/components/audio-player";
+import { RecommendationsTable } from "@/components/recommendations-table";
+import { AISummary } from "@/components/ai-summary";
 
 function App() {
   return (
@@ -23,7 +25,11 @@ function App() {
                   <Input />
                 </div>
                 <div className="max-w-md">
-                  <Output />
+                  <div className="w-[450px] space-y-2">
+                    <AudioPlayer />
+                    <AISummary />
+                    <RecommendationsTable />
+                  </div>
                 </div>
               </div>
             </div>
