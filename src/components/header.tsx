@@ -12,7 +12,7 @@ export default function Header() {
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
         DrawTunes
       </h1>
-
+      {/* 
       <div className="hidden md:inline-flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md font-mono text-xs">
         <span>Built by</span>
         <a
@@ -69,7 +69,7 @@ export default function Header() {
         >
           <img src={vercelLogo} className="w-3.5 h-3.5" alt="Vercel" />
         </a>
-      </div>
+      </div> */}
     </div>
   );
 }
