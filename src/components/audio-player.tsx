@@ -23,8 +23,12 @@ export function AudioPlayer() {
 
   // Effect 1: Handle track loading
   useEffect(() => {
-    if (currentTrack && audioRef.current) {
-      audioRef.current.src = currentTrack.previewUrl || '';
+    if (audioRef.current) {
+      if (currentTrack) {
+        audioRef.current.src = currentTrack.previewUrl || '';
+      } else {
+        audioRef.current.src = '';
+      }
     }
   }, [currentTrack]);
 

@@ -54,28 +54,28 @@ interface MusicContextType {
   // Current drawing state
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;
-  
+
   // Recommendations
   recommendations: RecommendationWithSong[];
-  
+
   // Drawings list
   allDrawings: Tables<"drawings">[];
   loadingDrawings: boolean;
   hasMoreDrawings: boolean;
   loadMoreDrawings: () => Promise<void>;
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
-  
+
   // Audio controls
   // audioState: AudioState;
-    play: (songIndex: number) => void;
+  play: (songIndex: number) => void;
   pause: () => void;
-  togglePlayPause: () =>void;
+  togglePlayPause: () => void;
   skipToNext: () => void;
   currentTrack: iTunesTrack | null;
   currentSongIndex: number | null;
   isPlaying: boolean;
 
-  
+
   // Canvas & background
   backgroundImage: string | null;
   clearBackgroundImage: () => void;
@@ -120,10 +120,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-    // This runs every render, even if nothing changed, so maybe should useMemo
-  const currentTrack = currentSongIndex === null || !recommendations[currentSongIndex] 
-    ? null 
-    : recommendations[currentSongIndex].song.full_track_data;
+  // This runs every render, even if nothing changed, so maybe should useMemo
+
+  const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
+
+  useEffect(() => {
+    const newTrack = currentSongIndex === null || !recommendations[currentSongIndex]
+      ? null
+      : recommendations[currentSongIndex].song.full_track_data;
+
+    setCurrentTrack(newTrack);
+  }, [currentSongIndex, recommendations]);
 
 
   // Canvas & background state
@@ -507,27 +514,27 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // Current drawing
     currentDrawing,
     clearCurrentDrawing,
-    
+
     // Recommendations
     recommendations,
-    
+
     // Drawings list
     allDrawings,
     loadingDrawings,
     hasMoreDrawings,
     loadMoreDrawings,
     setCurrentDrawingById,
-    
+
     // Audio controls
     // audioState,
-    play, 
-    pause, 
-    skipToNext, 
+    play,
+    pause,
+    skipToNext,
     currentTrack,
-    currentSongIndex, 
+    currentSongIndex,
     isPlaying,
     togglePlayPause,
-    
+
     // Canvas & background
     backgroundImage,
     clearCanvas,
