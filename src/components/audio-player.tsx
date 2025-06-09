@@ -6,8 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMusic } from "@/contexts/CurrentDrawingContext";
 import { useState, useRef, useEffect } from "react"
 
-
-
 export function AudioPlayer() {
   const { currentTrack, togglePlayPause, skipToNext, isPlaying } = useMusic();
   const [progress, setProgress] = useState(50);
@@ -21,12 +19,20 @@ export function AudioPlayer() {
     }
   };
 
+  const handleAudioEnded = () => {
+    if (audioRef.current && isPlaying) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+    }
+  };
+
   function startPlayback() {
     if (audioRef.current) {
       audioRef.current.play();
       progressInterval.current = setInterval(updateProgress, 500);
     }
   }
+  
   function pausePlayback() {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -41,14 +47,21 @@ export function AudioPlayer() {
       if (currentTrack) {
         console.log("AudioPlayer.useEffect(currentTrack): setting audioRef.current.src = currentTrack")
         audioRef.current.src = currentTrack.previewUrl || '';
+        audioRef.current.addEventListener('ended', handleAudioEnded);
         startPlayback();
       } else {
         console.log("AudioPlayer.useEffect(currentTrack): clearing audioRef.current.src")
+        audioRef.current.removeEventListener('ended', handleAudioEnded);
         audioRef.current.src = '';
       }
     }
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.removeEventListener('ended', handleAudioEnded);
+      }
+    };
   }, [currentTrack]);
-
 
   useEffect(() => {
     console.log("AudioPlayer.useEffect(isPlaying): isPlaying changed");
@@ -64,7 +77,6 @@ export function AudioPlayer() {
     }
     return () => clearInterval(progressInterval.current);
   }, [isPlaying]);
-
 
   if (!currentTrack) return <AudioPlayerSkeleton />;
 
@@ -127,15 +139,6 @@ export function AudioPlayer() {
     </Card>
   );
 }
-
-
-
-
-
-
-
-
-
 
 function AudioPlayerSkeleton() {
   return (
