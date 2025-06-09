@@ -67,7 +67,8 @@ interface MusicContextType {
 
   // Audio controls
   // audioState: AudioState;
-  play: (songIndex: number) => void;
+  play_from_recomendations: (songIndex: number) => void;
+  play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
   skipToNext: () => void;
@@ -124,13 +125,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
 
-  useEffect(() => {
-    const newTrack = currentSongIndex === null || !recommendations[currentSongIndex]
-      ? null
-      : recommendations[currentSongIndex].song.full_track_data;
-
-    setCurrentTrack(newTrack);
-  }, [currentSongIndex, recommendations]);
 
 
   // Canvas & background state
@@ -146,26 +140,47 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // AUDIO UTILITY FUNCTIONS
   // ========================================
 
-  const play = (index: number) => {
+    useEffect(() => {
+    console.log("ContextProvider.useEffect(currentSongIndex, recommendations): setCurrentTrack(newTrack);")
+
+    const newTrack = currentSongIndex === null || !recommendations[currentSongIndex]
+      ? null
+      : recommendations[currentSongIndex].song.full_track_data;
+
+    setCurrentTrack(newTrack);
+    setIsPlaying(true);
+  }, [currentSongIndex, recommendations]);
+
+  const play_from_recomendations = (index: number) =>{
+    console.log("ContextProvider.play_from_recomendations: setCurrentSongIndex to ", index)
     setCurrentSongIndex(index);
+    // console.log("ContextProvider.play_from_recomendations: play() ")
+    // play();
+  }
+
+
+  const play = () => {
+    console.log("ContextProvider.play:");
+    setIsPlaying(true);
   };
-
   const pause = useCallback(() => {
-    setCurrentSongIndex(null);
+    console.log("ContextProvider.pause:");
+    setIsPlaying(false);
   }, []);
-
   const togglePlayPause = () => {
-    console.log("togglePlayPause");
+    console.log("ContextProvider.togglePlayPause:");
     setIsPlaying(!isPlaying);
   };
 
   const skipToNext = useCallback(() => {
-    console.log("skiptonext");
-
+    console.log("ContextProvider.skipToNext:");
     setCurrentSongIndex(prev =>
       prev !== null ? (prev + 1) % recommendations.length : 0
     );
   }, [recommendations.length]);
+
+
+
 
   // const startProgressTracking = () => {
   //   if (progressIntervalRef.current) {
@@ -528,12 +543,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // Audio controls
     // audioState,
     play,
-    pause,
+    play_from_recomendations,
     skipToNext,
     currentTrack,
     currentSongIndex,
     isPlaying,
     togglePlayPause,
+    pause,
 
     // Canvas & background
     backgroundImage,

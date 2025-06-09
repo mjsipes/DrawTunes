@@ -9,7 +9,7 @@ import { useState, useRef, useEffect } from "react"
 
 
 export function AudioPlayer() {
-  const { currentTrack, pause, togglePlayPause, skipToNext, isPlaying } = useMusic();
+  const { currentTrack, togglePlayPause, skipToNext, isPlaying } = useMusic();
   const [progress, setProgress] = useState(50);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -21,29 +21,35 @@ export function AudioPlayer() {
     }
   };
 
-  // Effect 1: Handle track loading
   useEffect(() => {
+    console.log("AudioPlayer.useEffect(currentTrack):");
     if (audioRef.current) {
+      console.log("AudioPlayer.useEffect(currentTrack): audioRef is current")
       if (currentTrack) {
+        console.log("AudioPlayer.useEffect(currentTrack): setting audioRef.current.src = currentTrack")
         audioRef.current.src = currentTrack.previewUrl || '';
       } else {
+        console.log("AudioPlayer.useEffect(currentTrack): clearing audioRef.current.src")
         audioRef.current.src = '';
       }
     }
   }, [currentTrack]);
 
-  // Effect 2: Handle play/pause and progress tracking
+
   useEffect(() => {
+    console.log("AudioPlayer.useEffect(isPlaying): isPlaying changed");
     if (audioRef.current) {
+      console.log("AudioPlayer.useEffect(isPlaying): audioRef is current")
       if (isPlaying) {
+        console.log("AudioPlayer.useEffect(isPlaying): play audio")
         audioRef.current.play();
         progressInterval.current = setInterval(updateProgress, 500);
       } else {
+        console.log("AudioPlayer.useEffect(isPlaying): pause audio")
         audioRef.current.pause();
-        // clearInterval(progressInterval.current);
+        clearInterval(progressInterval.current);
       }
     }
-
     return () => clearInterval(progressInterval.current);
   }, [isPlaying]);
 
