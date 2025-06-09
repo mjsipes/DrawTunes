@@ -43,25 +43,6 @@ Deno.serve(async (req) => {
       public_url,
     );
 
-    //add ai message for image to database
-    {
-      const { data, error } = await supabase
-        .from("drawings")
-        .insert([
-          {
-            drawing_id: reqPayload.record.id,
-            drawing_url: public_url,
-            user_id: reqPayload.record.owner_id,
-            ai_message: message,
-            created_at: reqPayload.record.created_at,
-          },
-        ])
-        .select();
-
-      console.log("insert_drawing_data: ", data);
-      console.log("insert_drawing_error: ", error);
-    }
-
     //========================= ITUNES LOOKUP ==========================//
     let itunesResults;
     try {
@@ -99,6 +80,25 @@ Deno.serve(async (req) => {
     }
 
     //====================== DATABASE STORAGE =======================//
+        //add ai message for image to database
+    {
+      const { data, error } = await supabase
+        .from("drawings")
+        .insert([
+          {
+            drawing_id: reqPayload.record.id,
+            drawing_url: public_url,
+            user_id: reqPayload.record.owner_id,
+            ai_message: message,
+            created_at: reqPayload.record.created_at,
+          },
+        ])
+        .select();
+
+      console.log("insert_drawing_data: ", data);
+      console.log("insert_drawing_error: ", error);
+    }
+    
     console.log("Processing track data for new schema");
     const insertions = [];
     const errors = [];
@@ -151,6 +151,8 @@ Deno.serve(async (req) => {
 
             songId = newSong[0].id;
           }
+
+
 
           // Insert into recommendations table
           const { data: recData, error: recError } = await supabase
