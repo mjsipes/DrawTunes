@@ -11,6 +11,10 @@ import {
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
 interface AudioState {
   currentSongIndex: number | null;
   isPlaying: boolean;
@@ -42,67 +46,85 @@ interface RecommendationWithSong {
 }
 
 interface MusicContextType {
+  // Current drawing state
   currentDrawing: Tables<"drawings"> | null;
   clearCurrentDrawing: () => void;
+  
+  // Recommendations
   recommendations: RecommendationWithSong[];
-  // New drawings list functionality
+  
+  // Drawings list
   allDrawings: Tables<"drawings">[];
   loadingDrawings: boolean;
   hasMoreDrawings: boolean;
   loadMoreDrawings: () => Promise<void>;
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
-  // Audio state and controls
+  
+  // Audio controls
   audioState: AudioState;
   playAudio: (songIndex: number) => void;
   togglePlayPause: () => void;
   skipToNext: () => void;
   setProgress: (progress: number) => void;
+  
+  // Canvas & background
   backgroundImage: string | null;
   clearBackgroundImage: () => void;
   clearCanvas: () => void;
   registerCanvasClear: (clearFn: () => void) => void;
 }
 
-const MusicContext = createContext<MusicContextType | undefined>(undefined);
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
 const DRAWINGS_PER_PAGE = 15;
+
+// ============================================================================
+// CONTEXT SETUP
+// ============================================================================
+
+const MusicContext = createContext<MusicContextType | undefined>(undefined);
+
+// ============================================================================
+// MAIN PROVIDER COMPONENT
+// ============================================================================
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
-  const [currentDrawing, setCurrentDrawing] =
-    useState<Tables<"drawings"> | null>(null);
-  const [recommendations, setRecommendations] = useState<
-    RecommendationWithSong[]
-  >([]);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // New state for drawings list
+  // ========================================
+  // STATE DECLARATIONS
+  // ========================================
+
+  // Drawing state
+  const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
   const [allDrawings, setAllDrawings] = useState<Tables<"drawings">[]>([]);
   const [loadingDrawings, setLoadingDrawings] = useState(false);
   const [hasMoreDrawings, setHasMoreDrawings] = useState(true);
   const [drawingsPage, setDrawingsPage] = useState(0);
 
+  // Recommendations state
+  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
+
   // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Canvas & background state
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
+  const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
+
+  // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-
-  const clearBackgroundImage = () => {
-    setBackgroundImage(null);
-  };
-
-  const audioState: AudioState = {
-    currentSongIndex,
-    isPlaying,
-    progress,
-    audioRef,
-    progressIntervalRef,
-  };
+  // ========================================
+  // AUDIO UTILITY FUNCTIONS
+  // ========================================
 
   const startProgressTracking = () => {
     if (progressIntervalRef.current) {
@@ -111,8 +133,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     progressIntervalRef.current = setInterval(() => {
       if (audioRef.current) {
-        const value =
-          (audioRef.current.currentTime / audioRef.current.duration) * 100;
+        const value = (audioRef.current.currentTime / audioRef.current.duration) * 100;
         setProgress(isNaN(value) ? 0 : value);
       }
     }, 500);
@@ -131,6 +152,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setIsPlaying(false);
     setProgress(0);
   };
+
+  // ========================================
+  // MAIN FUNCTIONS
+  // ========================================
 
   const playAudio = async (songIndex: number) => {
     const song = recommendations[songIndex]?.song?.full_track_data;
@@ -195,7 +220,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     clearAudioState();
   };
 
-  // New function to load more drawings
   const loadMoreDrawings = useCallback(async () => {
     if (!user?.id || loadingDrawings || !hasMoreDrawings) return;
 
@@ -222,9 +246,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           setHasMoreDrawings(false);
         }
 
-        setAllDrawings((prev) =>
-          drawingsPage === 0 ? data : [...prev, ...data]
-        );
+        setAllDrawings((prev) => drawingsPage === 0 ? data : [...prev, ...data]);
         setDrawingsPage((prev) => prev + 1);
       }
     } catch (err) {
@@ -234,8 +256,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
 
-  const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
+  const setCurrentDrawingById = useCallback(
+    async (drawingId: string) => {
+      const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
+      if (!drawing) return;
 
+      clearAudioState();
+      setRecommendations([]);
+      setBackgroundImage(drawing.drawing_url);
+      clearCanvas();
+      setCurrentDrawing(drawing);
+    },
+    [allDrawings]
+  );
+
+  // Canvas functions
   const registerCanvasClear = useCallback((clearFn: () => void) => {
     setCanvasClearFn(() => clearFn);
   }, []);
@@ -246,19 +281,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [canvasClearFn]);
 
-  const setCurrentDrawingById = useCallback(
-    async (drawingId: string) => {
-      const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
-      if (!drawing) return;
+  const clearBackgroundImage = () => {
+    setBackgroundImage(null);
+  };
 
-      clearAudioState();
-      setRecommendations([]);
-      setBackgroundImage(drawing.drawing_url);
-      clearCanvas(); // Clear the canvas strokes
-      setCurrentDrawing(drawing);
-    },
-    [allDrawings, clearCanvas]
-  );
+  // ========================================
+  // EFFECTS
+  // ========================================
 
   // Load initial drawings when user changes
   useEffect(() => {
@@ -270,7 +299,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id]);
 
-  // Fetch current drawing
+  // Fetch current drawing and set up real-time subscription
   useEffect(() => {
     async function fetchCurrentDrawing() {
       if (!user?.id) return;
@@ -309,7 +338,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             if (payload.new) {
               const newDrawing = payload.new as Tables<"drawings">;
               setCurrentDrawing(newDrawing);
-              // Add to beginning of all drawings list
               setAllDrawings((prev) => [newDrawing, ...prev]);
             }
           }
@@ -327,15 +355,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     async function fetchRecommendations() {
       if (!currentDrawing?.drawing_id) return;
 
-      console.log(
-        "Querying recommendations for drawing ID:",
-        currentDrawing.drawing_id
-      );
+      console.log("Querying recommendations for drawing ID:", currentDrawing.drawing_id);
 
       const { data, error } = await supabase
         .from("recommendations")
-        .select(
-          `
+        .select(`
           id,
           drawing_id,
           songs!inner (
@@ -343,14 +367,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             full_track_data,
             last_updated
           )
-        `
-        )
+        `)
         .eq("drawing_id", currentDrawing.drawing_id);
 
       if (error) {
         console.error("Error fetching recommendations:", error);
         return;
       }
+
       console.log("fetched recommendations: ", data);
 
       if (!data || !Array.isArray(data) || data.length === 0) {
@@ -429,32 +453,57 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // ========================================
+  // CONTEXT VALUE
+  // ========================================
+
+  const audioState: AudioState = {
+    currentSongIndex,
+    isPlaying,
+    progress,
+    audioRef,
+    progressIntervalRef,
+  };
+
+  const contextValue: MusicContextType = {
+    // Current drawing
+    currentDrawing,
+    clearCurrentDrawing,
+    
+    // Recommendations
+    recommendations,
+    
+    // Drawings list
+    allDrawings,
+    loadingDrawings,
+    hasMoreDrawings,
+    loadMoreDrawings,
+    setCurrentDrawingById,
+    
+    // Audio controls
+    audioState,
+    playAudio,
+    togglePlayPause,
+    skipToNext,
+    setProgress,
+    
+    // Canvas & background
+    backgroundImage,
+    clearCanvas,
+    registerCanvasClear,
+    clearBackgroundImage,
+  };
+
   return (
-    <MusicContext.Provider
-      value={{
-        currentDrawing,
-        clearCurrentDrawing,
-        recommendations,
-        allDrawings,
-        loadingDrawings,
-        hasMoreDrawings,
-        loadMoreDrawings,
-        setCurrentDrawingById,
-        audioState,
-        playAudio,
-        togglePlayPause,
-        skipToNext,
-        setProgress,
-        backgroundImage,
-        clearCanvas,
-        registerCanvasClear,
-        clearBackgroundImage,
-      }}
-    >
+    <MusicContext.Provider value={contextValue}>
       {children}
     </MusicContext.Provider>
   );
 }
+
+// ============================================================================
+// CUSTOM HOOK
+// ============================================================================
 
 export function useMusic() {
   const context = useContext(MusicContext);
