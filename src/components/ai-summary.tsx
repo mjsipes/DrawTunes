@@ -1,18 +1,18 @@
 import { useMusic } from "@/contexts/CurrentDrawingContext";
-import { CardDescription } from "@/components/ui/card";
+import { Card,CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function AISummarySkeleton() {
   return (
-    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
+    <Card className="h-[84px] w-[448px] p-2">
       <div className="space-y-2">
         <Skeleton className="h-3.5 w-full" />
         <Skeleton className="h-3.5 w-[95%]" />
         <Skeleton className="h-3.5 w-[88%]" />
-        <Skeleton className="h-3.5 w-[82%]" />
+        {/* <Skeleton className="h-3.5 w-[82%]" /> */}
       </div>
-    </ScrollArea>
+    </Card>
   );
 }
 
