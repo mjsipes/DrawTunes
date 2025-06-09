@@ -4,20 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMusic } from "@/contexts/CurrentDrawingContext";
-import {useState, useRef, useEffect} from "react"
+import { useState, useRef, useEffect } from "react"
 
 
 
 export function AudioPlayer() {
-      const { currentTrack, pause, togglePlayPause, skipToNext, isPlaying } = useMusic();
-      const [progress, setProgress] = useState(50);
-      const audioRef = useRef<HTMLAudioElement>(null);
-      const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
-      
-      //   const currentSong =
-      // audioState.currentSongIndex !== null
-      //   ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
-      //   : recommendations[0]?.song?.full_track_data; // Add this fallback
+  const { currentTrack, pause, togglePlayPause, skipToNext, isPlaying } = useMusic();
+  const [progress, setProgress] = useState(50);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const updateProgress = () => {
+    if (audioRef.current) {
+      const newProgress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgress(newProgress);
+    }
+  };
+
+  // Effect 1: Handle track loading
+  useEffect(() => {
+    if (currentTrack && audioRef.current) {
+      audioRef.current.src = currentTrack.previewUrl || '';
+    }
+  }, [currentTrack]);
+
+  // Effect 2: Handle play/pause and progress tracking
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play();
+        progressInterval.current = setInterval(updateProgress, 500);
+      } else {
+        audioRef.current.pause();
+        // clearInterval(progressInterval.current);
+      }
+    }
+
+    return () => clearInterval(progressInterval.current);
+  }, [isPlaying]);
 
 
   if (!currentTrack) return <AudioPlayerSkeleton />;
