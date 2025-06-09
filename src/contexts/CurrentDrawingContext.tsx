@@ -120,8 +120,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+    // This runs every render, even if nothing changed, so maybe should useMemo
+  const currentTrack = currentSongIndex === null || !recommendations[currentSongIndex] 
+    ? null 
+    : recommendations[currentSongIndex].song.full_track_data;
 
-  // const [progress, setProgress] = useState(0);
 
   // Canvas & background state
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
@@ -136,24 +139,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // AUDIO UTILITY FUNCTIONS
   // ========================================
 
-    const currentTrack = useMemo(() => {
-    if (currentSongIndex === null || !recommendations[currentSongIndex]) return null;
-    return recommendations[currentSongIndex].song.full_track_data;
-  }, [currentSongIndex, recommendations]);
-
-    const play = useCallback((index: number) => {
+  const play = (index: number) => {
     setCurrentSongIndex(index);
-  }, []);
+  };
 
   const pause = useCallback(() => {
     setCurrentSongIndex(null);
   }, []);
 
-  const togglePlayPause = useCallback(()=>{
+  const togglePlayPause = () => {
     console.log("togglePlayPause");
-  },[]);
+    setIsPlaying(!isPlaying);
+  };
 
   const skipToNext = useCallback(() => {
+    console.log("skiptonext");
+
     setCurrentSongIndex(prev =>
       prev !== null ? (prev + 1) % recommendations.length : 0
     );
