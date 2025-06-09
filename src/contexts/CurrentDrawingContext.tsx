@@ -21,6 +21,10 @@ interface AudioState {
   progress: number;
   audioRef: React.RefObject<HTMLAudioElement | null>;
   progressIntervalRef: React.RefObject<NodeJS.Timeout | undefined>;
+    playAudio: (songIndex: number) => void;
+  togglePlayPause: () => void;
+  skipToNext: () => void;
+  setProgress: (progress: number) => void;
 }
 
 interface iTunesTrack {
@@ -62,10 +66,7 @@ interface MusicContextType {
   
   // Audio controls
   audioState: AudioState;
-  playAudio: (songIndex: number) => void;
-  togglePlayPause: () => void;
-  skipToNext: () => void;
-  setProgress: (progress: number) => void;
+
   
   // Canvas & background
   backgroundImage: string | null;
@@ -463,6 +464,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     progress,
     audioRef,
     progressIntervalRef,
+      playAudio,
+  togglePlayPause,
+  skipToNext,
+  setProgress,
   };
 
   const contextValue: MusicContextType = {
@@ -482,10 +487,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     
     // Audio controls
     audioState,
-    playAudio,
-    togglePlayPause,
-    skipToNext,
-    setProgress,
     
     // Canvas & background
     backgroundImage,

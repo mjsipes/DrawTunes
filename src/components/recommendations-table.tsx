@@ -50,7 +50,6 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
 
 export function RecommendationsTable() {
     const {
-    playAudio,
     audioState,
     recommendations
   } = useMusic();
@@ -85,7 +84,7 @@ export function RecommendationsTable() {
                     className={`cursor-pointer hover:bg-muted ${
                       isCurrentSong ? "bg-accent" : ""
                     }`}
-                    onClick={() => playAudio(index)}
+                    onClick={() => audioState.playAudio(index)}
                   >
                     <TableCell className="w-[30px] text-center text-sm">
                       {isCurrentSong ? (

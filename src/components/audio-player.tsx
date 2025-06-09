@@ -9,7 +9,7 @@ import { useMusic } from "@/contexts/CurrentDrawingContext";
 
 export function AudioPlayer() {
 
-    const { recommendations, audioState, togglePlayPause, skipToNext } =
+    const { recommendations, audioState } =
       useMusic();
 
       const currentSong =
@@ -57,7 +57,7 @@ export function AudioPlayer() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={togglePlayPause}
+                onClick={audioState.togglePlayPause}
               >
                 {audioState.isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -69,7 +69,7 @@ export function AudioPlayer() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={skipToNext}
+                onClick={audioState.skipToNext}
               >
                 <SkipForward className="h-4 w-4" />
               </Button>
