@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
 import {useRecommendations} from "@/hooks/use-recommendations"
 import {useCurrentDrawing} from "@/hooks/use-current-drawing"
+import { useInitialDrawings } from "@/hooks/use-initial-drawings"
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -267,6 +268,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id]);
 
+  useInitialDrawings(user, setAllDrawings, setDrawingsPage, setHasMoreDrawings, loadMoreDrawings);
   useCurrentDrawing(user, setCurrentDrawing, setAllDrawings);
   useRecommendations(currentDrawing, setRecommendations);
 
