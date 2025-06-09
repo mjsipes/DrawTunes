@@ -16,17 +16,6 @@ import type { Tables } from "@/lib/supabase/database.types";
 // TYPES & INTERFACES
 // ============================================================================
 
-// interface AudioState {
-//   currentSongIndex: number | null;
-//   isPlaying: boolean;
-//   progress: number;
-//   audioRef: React.RefObject<HTMLAudioElement | null>;
-//   progressIntervalRef: React.RefObject<NodeJS.Timeout | undefined>;
-//     playAudio: (songIndex: number) => void;
-//   togglePlayPause: () => void;
-//   skipToNext: () => void;
-//   setProgress: (progress: number) => void;
-// }
 
 interface iTunesTrack {
   trackId: number;
@@ -125,16 +114,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
 
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
 
   // Canvas & background state
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
-
-  // Refs
-  // const audioRef = useRef<HTMLAudioElement | null>(null);
-  // const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  
 
   // ========================================
   // AUDIO UTILITY FUNCTIONS
@@ -179,95 +165,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     );
   }, [recommendations.length]);
 
-
-
-
-  // const startProgressTracking = () => {
-  //   if (progressIntervalRef.current) {
-  //     clearInterval(progressIntervalRef.current);
-  //   }
-
-  //   progressIntervalRef.current = setInterval(() => {
-  //     if (audioRef.current) {
-  //       const value = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-  //       setProgress(isNaN(value) ? 0 : value);
-  //     }
-  //   }, 500);
-  // };
-
-  // const clearAudioState = () => {
-  //   if (audioRef.current) {
-  //     audioRef.current.pause();
-  //     audioRef.current = null;
-  //   }
-  //   if (progressIntervalRef.current) {
-  //     clearInterval(progressIntervalRef.current);
-  //     progressIntervalRef.current = undefined;
-  //   }
-  //   setCurrentSongIndex(null);
-  //   setIsPlaying(false);
-  //   setProgress(0);
-  // };
-
-  // ========================================
-  // MAIN FUNCTIONS
-  // ========================================
-
-  // const playAudio = async (songIndex: number) => {
-  //   const song = recommendations[songIndex]?.song?.full_track_data;
-  //   if (!song?.previewUrl) return;
-
-  //   if (audioRef.current) {
-  //     audioRef.current.pause();
-  //   }
-
-  //   audioRef.current = new Audio(song.previewUrl);
-  //   setCurrentSongIndex(songIndex);
-  //   setProgress(0);
-
-  //   audioRef.current.addEventListener("ended", skipToNext);
-  //   audioRef.current.addEventListener("error", skipToNext);
-
-  //   try {
-  //     await audioRef.current.play();
-  //     setIsPlaying(true);
-  //     startProgressTracking();
-  //   } catch (err) {
-  //     console.error("Playback failed:", err);
-  //     skipToNext();
-  //   }
-  // };
-
-  // const togglePlayPause = () => {
-  //   if (!audioRef.current) {
-  //     if (currentSongIndex !== null) {
-  //       playAudio(currentSongIndex);
-  //     } else if (recommendations.length > 0) {
-  //       playAudio(0);
-  //     }
-  //     return;
-  //   }
-
-  //   if (isPlaying) {
-  //     audioRef.current.pause();
-  //     if (progressIntervalRef.current) {
-  //       clearInterval(progressIntervalRef.current);
-  //     }
-  //   } else {
-  //     audioRef.current.play();
-  //     startProgressTracking();
-  //   }
-  //   setIsPlaying(!isPlaying);
-  // };
-
-  // const skipToNext = () => {
-  //   const nextIndex = currentSongIndex !== null ? currentSongIndex + 1 : 0;
-  //   if (nextIndex >= recommendations.length) {
-  //     playAudio(0);
-  //   } else {
-  //     playAudio(nextIndex);
-  //   }
-  // };
 
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
