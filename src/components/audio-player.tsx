@@ -4,18 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMusic } from "@/contexts/CurrentDrawingContext";
+import {useState} from "react"
 
 
 
 export function AudioPlayer() {
 
-    const { recommendations, audioState } =
-      useMusic();
 
-      const currentSong =
-    audioState.currentSongIndex !== null
-      ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
-      : recommendations[0]?.song?.full_track_data; // Add this fallback
+      const { currentTrack, pause, skipToNext, isPlaying } = useMusic();
+
+    //   const currentSong =
+    // audioState.currentSongIndex !== null
+    //   ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
+    //   : recommendations[0]?.song?.full_track_data; // Add this fallback
+    const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const progressInterval = useRef<NodeJS.Timeout>();
 
 
 
@@ -31,11 +35,11 @@ export function AudioPlayer() {
             <div className="flex items-center gap-3 w-[280px]">
               {currentSong.artworkUrl100 ? (
                 <img
-                  src={currentSong.artworkUrl100.replace(
+                  src={currentTrack.artworkUrl100.replace(
                     "100x100bb.jpg",
                     "300x300bb.jpg"
                   )}
-                  alt={`${currentSong.collectionName || ""} cover`}
+                  alt={`${currentTrack.collectionName || ""} cover`}
                   className="w-10 h-10 rounded-md object-cover shadow-sm flex-shrink-0"
                 />
               ) : (
@@ -45,10 +49,10 @@ export function AudioPlayer() {
               )}
               <div className="overflow-hidden min-w-0">
                 <p className="font-medium text-sm truncate">
-                  {currentSong.trackName}
+                  {currentTrack.trackName}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {currentSong.artistName || "Unknown Artist"}
+                  {currentTrack.artistName || "Unknown Artist"}
                 </p>
               </div>
             </div>
@@ -59,7 +63,7 @@ export function AudioPlayer() {
                 className="w-8 h-8 rounded-md"
                 onClick={audioState.togglePlayPause}
               >
-                {audioState.isPlaying ? (
+                {isPlaying ? (
                   <Pause className="h-4 w-4" />
                 ) : (
                   <Play className="h-4 w-4" />
@@ -69,13 +73,14 @@ export function AudioPlayer() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={audioState.skipToNext}
+                onClick={skipToNext}
               >
                 <SkipForward className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <Progress value={audioState.progress} className="h-1 w-full" />
+          <Progress value={progress} className="h-1 w-full" />
+          <audio ref={audioRef} style={{ display: "none" }} />
         </div>
       </CardContent>
     </Card>
