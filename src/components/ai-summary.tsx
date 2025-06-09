@@ -26,8 +26,12 @@ export function AISummary() {
   }
 
   return (
-    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
+    <ScrollArea className="h-[84px] w-[448px] rounded-xl border p-2 scrollbar-hide bg-card">
       <CardDescription>{currentDrawing?.ai_message}</CardDescription>
+
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-card via-card/90 to-transparent pointer-events-none z-10" />
+      
+      <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-card via-card/90 to-transparent pointer-events-none z-10" />
     </ScrollArea>
   );
 }
