@@ -55,7 +55,6 @@ interface MusicContextType {
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
 
   // Audio controls
-  // audioState: AudioState;
   play_from_recomendations: (songIndex: number) => void;
   play: () => void;
   pause: () => void;
@@ -120,24 +119,35 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // Canvas & background state
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
-  
+
 
   // ========================================
   // AUDIO UTILITY FUNCTIONS
   // ========================================
 
-    useEffect(() => {
-    console.log("ContextProvider.useEffect(currentSongIndex, recommendations): setCurrentTrack(newTrack);")
-
-    const newTrack = currentSongIndex === null || !recommendations[currentSongIndex]
-      ? null
-      : recommendations[currentSongIndex].song.full_track_data;
+  useEffect(() => {
+    console.log("ContextProvider.useEffect(currentSongIndex): set current track to current song index")
+    const newTrack =
+      currentSongIndex === null || !recommendations[currentSongIndex] ?
+        null : recommendations[currentSongIndex].song.full_track_data;
 
     setCurrentTrack(newTrack);
     setIsPlaying(true);
-  }, [currentSongIndex, recommendations]);
+  }, [currentSongIndex]);
 
-  const play_from_recomendations = (index: number) =>{
+
+  useEffect(() => {
+    console.log("ContextProvider.useEffect( recommendations): set current song index to 0");
+    setCurrentSongIndex(0);
+    const newTrack =
+      currentSongIndex === null || !recommendations[currentSongIndex] ?
+        null : recommendations[currentSongIndex].song.full_track_data;
+
+    setCurrentTrack(newTrack);
+    setIsPlaying(true);
+  }, [recommendations])
+
+  const play_from_recomendations = (index: number) => {
     console.log("ContextProvider.play_from_recomendations: setCurrentSongIndex to ", index)
     setCurrentSongIndex(index);
     // console.log("ContextProvider.play_from_recomendations: play() ")
@@ -170,7 +180,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
-    // clearAudioState();
   };
 
   const loadMoreDrawings = useCallback(async () => {
@@ -211,13 +220,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const setCurrentDrawingById = useCallback(
     async (drawingId: string) => {
+      console.log("ContextProvider.setCurrentDrawingById: finding drawing by ID");
       const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
       if (!drawing) return;
 
       // clearAudioState();
+      console.log("ContextProvider.setCurrentDrawingById: clearing recomendations");
       setRecommendations([]);
+      console.log("ContextProvider.setCurrentDrawingById: clear canvas and set background image");
       setBackgroundImage(drawing.drawing_url);
       clearCanvas();
+      console.log("ContextProvider.setCurrentDrawingById: setCurrentDrawing");
       setCurrentDrawing(drawing);
     },
     [allDrawings]
@@ -305,11 +318,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Fetch recommendations when drawing changes
   useEffect(() => {
+
+    //warning
     async function fetchRecommendations() {
+      console.log("ContextProvider.fetchRecommendations:");
       if (!currentDrawing?.drawing_id) return;
-
-      console.log("Querying recommendations for drawing ID:", currentDrawing.drawing_id);
-
+      console.log("ContextProvider.fetchRecommendations: fetching recs for drawing id:", currentDrawing.drawing_id);
       const { data, error } = await supabase
         .from("recommendations")
         .select(`
@@ -324,19 +338,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         .eq("drawing_id", currentDrawing.drawing_id);
 
       if (error) {
-        console.error("Error fetching recommendations:", error);
+        console.log("ContextProvider.fetchRecommendations: error fetching recomendations: ", error);
         return;
       }
 
-      console.log("fetched recommendations: ", data);
+      console.log("ContextProvider.fetchRecommendations: fetched recomendations: ", data);
 
       if (!data || !Array.isArray(data) || data.length === 0) {
-        console.log("No recommendations data found");
+        console.log("ContextProvider.fetchRecommendations: No recommendations data found");
         setRecommendations([]);
         return;
       }
-
-      console.log("Recommendations data:", data);
 
       const normalizedData = data
         .map((item) => {
@@ -344,7 +356,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             console.warn("Item missing songs data:", item);
             return null;
           }
-
           return {
             id: item.id,
             drawing_id: item.drawing_id,
@@ -352,15 +363,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           };
         })
         .filter(Boolean) as RecommendationWithSong[];
-
       setRecommendations(normalizedData);
     }
 
     fetchRecommendations();
 
     if (currentDrawing?.drawing_id) {
-      console.log("Current drawing:", currentDrawing);
-
       const channel = supabase
         .channel("recommendations-channel")
         .on(
@@ -392,35 +400,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         }
       };
     }
-  }, [currentDrawing?.id]);
+  }, [currentDrawing]);
 
-  // Cleanup on unmount
-  // useEffect(() => {
-  //   return () => {
-  //     if (audioRef.current) {
-  //       audioRef.current.pause();
-  //     }
-  //     if (progressIntervalRef.current) {
-  //       clearInterval(progressIntervalRef.current);
-  //     }
-  //   };
-  // }, []);
 
   // ========================================
   // CONTEXT VALUE
   // ========================================
 
-  // const audioState: AudioState = {
-  //   currentSongIndex,
-  //   isPlaying,
-  //   progress,
-  //   audioRef,
-  //   progressIntervalRef,
-  //     playAudio,
-  // togglePlayPause,
-  // skipToNext,
-  // setProgress,
-  // };
 
   const contextValue: MusicContextType = {
     // Current drawing
