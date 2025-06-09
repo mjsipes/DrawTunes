@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -66,6 +67,13 @@ interface MusicContextType {
   
   // Audio controls
   // audioState: AudioState;
+    play: (songIndex: number) => void;
+  pause: () => void;
+  togglePlayPause: () =>void;
+  skipToNext: () => void;
+  currentTrack: iTunesTrack | null;
+  currentSongIndex: number | null;
+  isPlaying: boolean;
 
   
   // Canvas & background
@@ -110,8 +118,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
 
   // Audio state
-  // const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
-  // const [isPlaying, setIsPlaying] = useState(false);
+  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
   // const [progress, setProgress] = useState(0);
 
   // Canvas & background state
@@ -126,6 +135,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // ========================================
   // AUDIO UTILITY FUNCTIONS
   // ========================================
+
+    const currentTrack = useMemo(() => {
+    if (currentSongIndex === null || !recommendations[currentSongIndex]) return null;
+    return recommendations[currentSongIndex].song.full_track_data;
+  }, [currentSongIndex, recommendations]);
+
+    const play = useCallback((index: number) => {
+    setCurrentSongIndex(index);
+  }, []);
+
+  const pause = useCallback(() => {
+    setCurrentSongIndex(null);
+  }, []);
+
+  const togglePlayPause = useCallback(()=>{
+    console.log("togglePlayPause");
+  },[]);
+
+  const skipToNext = useCallback(() => {
+    setCurrentSongIndex(prev =>
+      prev !== null ? (prev + 1) % recommendations.length : 0
+    );
+  }, [recommendations.length]);
 
   // const startProgressTracking = () => {
   //   if (progressIntervalRef.current) {
@@ -487,6 +519,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     
     // Audio controls
     // audioState,
+    play, 
+    pause, 
+    skipToNext, 
+    currentTrack,
+    currentSongIndex, 
+    isPlaying,
+    togglePlayPause,
     
     // Canvas & background
     backgroundImage,

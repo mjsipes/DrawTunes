@@ -4,28 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMusic } from "@/contexts/CurrentDrawingContext";
-import {useState} from "react"
+import {useState, useRef, useEffect} from "react"
 
 
 
 export function AudioPlayer() {
+      const { currentTrack, pause, togglePlayPause, skipToNext, isPlaying } = useMusic();
+      const [progress, setProgress] = useState(50);
+      const audioRef = useRef<HTMLAudioElement>(null);
+      const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
+      
+      //   const currentSong =
+      // audioState.currentSongIndex !== null
+      //   ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
+      //   : recommendations[0]?.song?.full_track_data; // Add this fallback
 
 
-      const { currentTrack, pause, skipToNext, isPlaying } = useMusic();
-
-    //   const currentSong =
-    // audioState.currentSongIndex !== null
-    //   ? recommendations[audioState.currentSongIndex]?.song?.full_track_data
-    //   : recommendations[0]?.song?.full_track_data; // Add this fallback
-    const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const progressInterval = useRef<NodeJS.Timeout>();
-
-
-
-  if (!currentSong) {
-    return <AudioPlayerSkeleton />;
-  }
+  if (!currentTrack) return <AudioPlayerSkeleton />;
 
   return (
     <Card>
@@ -33,7 +28,7 @@ export function AudioPlayer() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 w-[280px]">
-              {currentSong.artworkUrl100 ? (
+              {currentTrack.artworkUrl100 ? (
                 <img
                   src={currentTrack.artworkUrl100.replace(
                     "100x100bb.jpg",
@@ -61,7 +56,7 @@ export function AudioPlayer() {
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 rounded-md"
-                onClick={audioState.togglePlayPause}
+                onClick={togglePlayPause}
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" />
@@ -86,6 +81,15 @@ export function AudioPlayer() {
     </Card>
   );
 }
+
+
+
+
+
+
+
+
+
 
 function AudioPlayerSkeleton() {
   return (
