@@ -267,57 +267,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id]);
 
-  // Fetch current drawing and set up real-time subscription
-  useEffect(() => {
-    async function fetchCurrentDrawing() {
-      if (!user?.id) return;
-
-      const { data, error } = await supabase
-        .from("drawings")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error("Error fetching most recent drawing:", error);
-        return;
-      }
-
-      console.log("currentDrawing: ", data);
-      setCurrentDrawing(data && data.length > 0 ? data[0] : null);
-    }
-
-    fetchCurrentDrawing();
-
-    if (user?.id) {
-      const channel = supabase
-        .channel("drawings-latest-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "drawings",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log("drawing subscription triggered: ", payload);
-            if (payload.new) {
-              const newDrawing = payload.new as Tables<"drawings">;
-              setCurrentDrawing(newDrawing);
-              setAllDrawings((prev) => [newDrawing, ...prev]);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
-
   useCurrentDrawing(user, setCurrentDrawing, setAllDrawings);
   useRecommendations(currentDrawing, setRecommendations);
 
