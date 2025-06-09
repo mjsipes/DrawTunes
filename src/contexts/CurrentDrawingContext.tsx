@@ -15,10 +15,7 @@ import { useRecommendations } from "@/hooks/use-recommendations"
 import { useCurrentDrawing } from "@/hooks/use-current-drawing"
 import { useInitialDrawings } from "@/hooks/use-initial-drawings"
 
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
+const DRAWINGS_PER_PAGE = 15;
 
 interface iTunesTrack {
   trackId: number;
@@ -52,7 +49,6 @@ interface MusicContextType {
   currentSongIndex: number | null;
   isPlaying: boolean;
   backgroundImage: string | null;
-
   clearCurrentDrawing: () => void;
   loadMoreDrawings: () => Promise<void>;
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
@@ -66,41 +62,23 @@ interface MusicContextType {
   registerCanvasClear: (clearFn: () => void) => void;
 }
 
-const DRAWINGS_PER_PAGE = 15;
-
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
-// ============================================================================
-// MAIN PROVIDER COMPONENT
-// ============================================================================
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
 
-  // ========================================
-  // STATE DECLARATIONS
-  // ========================================
 
-  // Drawing state
   const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
   const [allDrawings, setAllDrawings] = useState<Tables<"drawings">[]>([]);
   const [loadingDrawings, setLoadingDrawings] = useState(false);
   const [hasMoreDrawings, setHasMoreDrawings] = useState(true);
   const [drawingsPage, setDrawingsPage] = useState(0);
-
-  // Recommendations state
   const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
-
-  // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  // This runs every render, even if nothing changed, so maybe should useMemo
-
   const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
-
-
-  // Canvas & background state
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
 
@@ -108,7 +86,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // ========================================
   // AUDIO UTILITY FUNCTIONS
   // ========================================
-
   useEffect(() => {
     console.log("ContextProvider.useEffect(currentSongIndex): set current track to current song index")
     const newTrack =
@@ -118,7 +95,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentTrack(newTrack);
     setIsPlaying(true);
   }, [currentSongIndex]);
-
 
   useEffect(() => {
     console.log("ContextProvider.useEffect( recommendations): set current song index to 0");
@@ -137,8 +113,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     // console.log("ContextProvider.play_from_recomendations: play() ")
     // play();
   }
-
-
   const play = () => {
     console.log("ContextProvider.play:");
     setIsPlaying(true);
@@ -151,7 +125,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     console.log("ContextProvider.togglePlayPause:");
     setIsPlaying(!isPlaying);
   };
-
   const skipToNext = useCallback(() => {
     console.log("ContextProvider.skipToNext:");
     setCurrentSongIndex(prev =>
@@ -159,18 +132,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     );
   }, [recommendations.length]);
 
-
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
   };
 
+  const registerCanvasClear = useCallback((clearFn: () => void) => {
+    setCanvasClearFn(() => clearFn);
+  }, []);
+
+  const clearCanvas = useCallback(() => {
+    if (canvasClearFn) {
+      canvasClearFn();
+    }
+  }, [canvasClearFn]);
+
+  const clearBackgroundImage = () => {
+    setBackgroundImage(null);
+  };
+
   const loadMoreDrawings = useCallback(async () => {
     if (!user?.id || loadingDrawings || !hasMoreDrawings) return;
-
     setLoadingDrawings(true);
-
     try {
       const { data, error } = await supabase
         .from("drawings")
@@ -181,17 +165,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           drawingsPage * DRAWINGS_PER_PAGE,
           (drawingsPage + 1) * DRAWINGS_PER_PAGE - 1
         );
-
       if (error) {
         console.error("Error fetching drawings:", error);
         return;
       }
-
       if (data) {
         if (data.length < DRAWINGS_PER_PAGE) {
           setHasMoreDrawings(false);
         }
-
         setAllDrawings((prev) => drawingsPage === 0 ? data : [...prev, ...data]);
         setDrawingsPage((prev) => prev + 1);
       }
@@ -220,21 +201,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     [allDrawings]
   );
 
-  // Canvas functions
-  const registerCanvasClear = useCallback((clearFn: () => void) => {
-    setCanvasClearFn(() => clearFn);
-  }, []);
-
-  const clearCanvas = useCallback(() => {
-    if (canvasClearFn) {
-      canvasClearFn();
-    }
-  }, [canvasClearFn]);
-
-  const clearBackgroundImage = () => {
-    setBackgroundImage(null);
-  };
-
   // ========================================
   // EFFECTS
   // ========================================
@@ -242,7 +208,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useCurrentDrawing(user, setCurrentDrawing, setAllDrawings);
   useRecommendations(currentDrawing, setRecommendations);
 
-  
+
   const contextValue: MusicContextType = {
     currentDrawing,
     clearCurrentDrawing,
