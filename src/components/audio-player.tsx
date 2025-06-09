@@ -21,6 +21,19 @@ export function AudioPlayer() {
     }
   };
 
+  function startPlayback() {
+    if (audioRef.current) {
+      audioRef.current.play();
+      progressInterval.current = setInterval(updateProgress, 500);
+    }
+  }
+  function pausePlayback() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      clearInterval(progressInterval.current);
+    }
+  }
+
   useEffect(() => {
     console.log("AudioPlayer.useEffect(currentTrack):");
     if (audioRef.current) {
@@ -28,6 +41,7 @@ export function AudioPlayer() {
       if (currentTrack) {
         console.log("AudioPlayer.useEffect(currentTrack): setting audioRef.current.src = currentTrack")
         audioRef.current.src = currentTrack.previewUrl || '';
+        startPlayback();
       } else {
         console.log("AudioPlayer.useEffect(currentTrack): clearing audioRef.current.src")
         audioRef.current.src = '';
@@ -42,12 +56,10 @@ export function AudioPlayer() {
       console.log("AudioPlayer.useEffect(isPlaying): audioRef is current")
       if (isPlaying) {
         console.log("AudioPlayer.useEffect(isPlaying): play audio")
-        audioRef.current.play();
-        progressInterval.current = setInterval(updateProgress, 500);
+        startPlayback();
       } else {
         console.log("AudioPlayer.useEffect(isPlaying): pause audio")
-        audioRef.current.pause();
-        clearInterval(progressInterval.current);
+        pausePlayback();
       }
     }
     return () => clearInterval(progressInterval.current);
