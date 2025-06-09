@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
+import {useRecommendations} from "@/hooks/use-recommendations"
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -29,7 +30,7 @@ interface iTunesTrack {
   trackViewUrl?: string;
 }
 
-interface RecommendationWithSong {
+export interface RecommendationWithSong {
   id: string;
   drawing_id: string | null;
   song: {
@@ -316,92 +317,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.id]);
 
-  // Fetch recommendations when drawing changes
-  useEffect(() => {
-
-    //warning
-    async function fetchRecommendations() {
-      console.log("ContextProvider.fetchRecommendations:");
-      if (!currentDrawing?.drawing_id) return;
-      console.log("ContextProvider.fetchRecommendations: fetching recs for drawing id:", currentDrawing.drawing_id);
-      const { data, error } = await supabase
-        .from("recommendations")
-        .select(`
-          id,
-          drawing_id,
-          songs!inner (
-            id, 
-            full_track_data,
-            last_updated
-          )
-        `)
-        .eq("drawing_id", currentDrawing.drawing_id);
-
-      if (error) {
-        console.log("ContextProvider.fetchRecommendations: error fetching recomendations: ", error);
-        return;
-      }
-
-      console.log("ContextProvider.fetchRecommendations: fetched recomendations: ", data);
-
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        console.log("ContextProvider.fetchRecommendations: No recommendations data found");
-        setRecommendations([]);
-        return;
-      }
-
-      const normalizedData = data
-        .map((item) => {
-          if (!item.songs) {
-            console.warn("Item missing songs data:", item);
-            return null;
-          }
-          return {
-            id: item.id,
-            drawing_id: item.drawing_id,
-            song: Array.isArray(item.songs) ? item.songs[0] : item.songs,
-          };
-        })
-        .filter(Boolean) as RecommendationWithSong[];
-      setRecommendations(normalizedData);
-    }
-
-    fetchRecommendations();
-
-    if (currentDrawing?.drawing_id) {
-      const channel = supabase
-        .channel("recommendations-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "recommendations",
-            filter: `drawing_id=eq.${currentDrawing.drawing_id}`,
-          },
-          (payload) => {
-            if (payload.new) {
-              console.log("recommendation subscription triggered: ", payload);
-              if (debounceTimer.current) {
-                clearTimeout(debounceTimer.current);
-              }
-              debounceTimer.current = setTimeout(() => {
-                fetchRecommendations();
-              }, 500);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-        if (debounceTimer.current) {
-          clearTimeout(debounceTimer.current);
-        }
-      };
-    }
-  }, [currentDrawing]);
-
+  useRecommendations(currentDrawing, setRecommendations);
 
   // ========================================
   // CONTEXT VALUE
