@@ -16,12 +16,11 @@ export function AudioPlayer() {
 
   const updateProgress = () => {
     if (audioRef.current) {
-      const newProgress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-      setProgress(newProgress);
+      setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
     }
   };
 
-  const handleAudioEnded = () => {
+  const loopAudio = () => {
     if (audioRef.current && isPlaying) {
       audioRef.current.currentTime = 0;
       audioRef.current.play();
@@ -34,36 +33,43 @@ export function AudioPlayer() {
       progressInterval.current = setInterval(updateProgress, 500);
     }
   }
-  
-  function pausePlayback() {
+
+  function stopPlayback() {
     if (audioRef.current) {
       audioRef.current.pause();
       clearInterval(progressInterval.current);
     }
   }
 
-  useEffect(() => {
-    console.log("AudioPlayer.useEffect(currentTrack):");
-    if (audioRef.current) {
-      console.log("AudioPlayer.useEffect(currentTrack): audioRef is current")
-      if (currentTrack) {
-        console.log("AudioPlayer.useEffect(currentTrack): setting audioRef.current.src = currentTrack")
-        audioRef.current.src = currentTrack.previewUrl || '';
-        audioRef.current.addEventListener('ended', handleAudioEnded);
-        startPlayback();
-      } else {
-        console.log("AudioPlayer.useEffect(currentTrack): clearing audioRef.current.src")
-        audioRef.current.removeEventListener('ended', handleAudioEnded);
-        audioRef.current.src = '';
-      }
+  function setupAudio() {
+    if (audioRef.current && currentTrack) {
+      audioRef.current.src = currentTrack.previewUrl || '';
+      audioRef.current.addEventListener('ended', loopAudio);
     }
-    
+  }
+
+  function cleanupAudio() {
+    if (audioRef.current) {
+      audioRef.current.removeEventListener('ended', loopAudio);
+      audioRef.current.src = '';
+    }
+  }
+
+  useEffect(() => {
+    if (currentTrack) {
+      console.log("AudioPlayer.useEffect(currentTrack): setup audio and start playback")
+      setupAudio();
+      startPlayback();
+    } else {
+      console.log("AudioPlayer.useEffect(currentTrack): cleanup audio and stop playback")
+      cleanupAudio();
+      stopPlayback();
+    }
     return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', handleAudioEnded);
-      }
+      cleanupAudio();
     };
   }, [currentTrack]);
+
 
   useEffect(() => {
     console.log("AudioPlayer.useEffect(isPlaying): isPlaying changed");
@@ -74,7 +80,7 @@ export function AudioPlayer() {
         startPlayback();
       } else {
         console.log("AudioPlayer.useEffect(isPlaying): pause audio")
-        pausePlayback();
+        stopPlayback();
       }
     }
     return () => clearInterval(progressInterval.current);
@@ -102,7 +108,7 @@ export function AudioPlayer() {
           className="rounded-md"
         />
       </motion.div>
-      
+
       <Card className="relative">
         <CardContent>
           <div className="flex flex-col gap-2">
