@@ -92,6 +92,7 @@ export function AudioPlayer() {
     <div className="relative">
       <motion.div
         className="pointer-events-none absolute inset-0"
+        initial={{ opacity: 0 }}
         animate={{
           opacity: isPlaying ? 1 : 0,
         }}
