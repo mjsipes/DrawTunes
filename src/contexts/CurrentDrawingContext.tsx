@@ -44,7 +44,6 @@ interface MusicContextType {
   loadingDrawings: boolean;
   hasMoreDrawings: boolean;
   currentTrack: iTunesTrack | null;
-  currentSongIndex: number | null;
   backgroundImage: string | null;
   skipToNext: () => void;
   clearCurrentDrawing: () => void;
@@ -63,14 +62,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
 
-
   const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
   const [allDrawings, setAllDrawings] = useState<Tables<"drawings">[]>([]);
   const [loadingDrawings, setLoadingDrawings] = useState(false);
   const [hasMoreDrawings, setHasMoreDrawings] = useState(true);
   const [drawingsPage, setDrawingsPage] = useState(0);
-  const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
-  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
@@ -80,35 +77,32 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   // AUDIO UTILITY FUNCTIONS
   // ========================================
   useEffect(() => {
-    console.log("ContextProvider.useEffect(currentSongIndex): set current track to current song index")
-    const newTrack =
-      currentSongIndex === null || !recommendations[currentSongIndex] ?
-        null : recommendations[currentSongIndex].song.full_track_data;
-
-    setCurrentTrack(newTrack);
-  }, [currentSongIndex]);
-
-  useEffect(() => {
-    console.log("ContextProvider.useEffect(recommendations): set current song index to 0");
-    setCurrentSongIndex(0);
-    const newTrack =
-      currentSongIndex === null || !recommendations[currentSongIndex] ?
-        null : recommendations[currentSongIndex].song.full_track_data;
-    setCurrentTrack(newTrack);
-
+    console.log("ContextProvider.useEffect(recommendations): set current track to first recommendation");
+    if (recommendations.length > 0) {
+      setCurrentTrack(recommendations[0].song.full_track_data);
+    } else {
+      setCurrentTrack(null);
+    }
   }, [recommendations])
 
   const play_from_recomendations = (index: number) => {
-    console.log("ContextProvider.play_from_recomendations: setCurrentSongIndex to ", index)
-    setCurrentSongIndex(index);
+    console.log("ContextProvider.play_from_recomendations: set current track to index ", index)
+    if (recommendations[index]) {
+      setCurrentTrack(recommendations[index].song.full_track_data);
+    }
   }
 
-        const skipToNext = useCallback(() => {
+  const skipToNext = useCallback(() => {
     console.log("ContextProvider.skipToNext:");
-    setCurrentSongIndex(prev =>
-      prev !== null ? (prev + 1) % recommendations.length : 0
+    if (!currentTrack || recommendations.length === 0) return;
+    
+    const currentIndex = recommendations.findIndex(
+      rec => rec.song.full_track_data.trackId === currentTrack.trackId
     );
-  }, [recommendations.length]);
+    
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % recommendations.length;
+    setCurrentTrack(recommendations[nextIndex].song.full_track_data);
+  }, [currentTrack, recommendations]);
 
 
 
@@ -169,7 +163,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
       if (!drawing) return;
 
-      // clearAudioState();
       console.log("ContextProvider.setCurrentDrawingById: clearing recomendations");
       setRecommendations([]);
       console.log("ContextProvider.setCurrentDrawingById: clear canvas and set background image");
@@ -200,7 +193,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setCurrentDrawingById,
     play_from_recomendations,
     currentTrack,
-    currentSongIndex,
     backgroundImage,
     clearCanvas,
     registerCanvasClear,

@@ -49,7 +49,7 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
 
 
 export function RecommendationsTable() {
-    const { play_from_recomendations, currentSongIndex, recommendations   } = useMusic();
+    const { play_from_recomendations, currentTrack, recommendations   } = useMusic();
 
 
 
@@ -73,7 +73,7 @@ export function RecommendationsTable() {
                 const trackData = rec.song?.full_track_data;
                 if (!trackData) return null;
 
-                const isCurrentSong = currentSongIndex === index;
+                const isCurrentSong = currentTrack?.trackId === trackData.trackId;
 
                 return (
                   <TableRow
