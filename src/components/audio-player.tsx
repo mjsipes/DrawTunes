@@ -7,12 +7,33 @@ import { useMusic } from "@/contexts/CurrentDrawingContext";
 import { useState, useRef, useEffect } from "react"
 import { GlowEffect } from '@/components/glow-effect';
 import { motion } from 'motion/react';
+import { useCallback } from "react";
 
 export function AudioPlayer() {
-  const { currentTrack, togglePlayPause, skipToNext, isPlaying } = useMusic();
-  const [progress, setProgress] = useState(50);
+  const { currentTrack , skipToNext} = useMusic();
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  const play = () => {
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  };
+
+  const pause = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, []);
+
+  const togglePlayPause = () => {
+    if (!audioRef.current?.paused) {
+      pause();
+    } else {
+      play();
+    }
+  };
 
   const updateProgress = () => {
     if (audioRef.current) {
@@ -21,7 +42,7 @@ export function AudioPlayer() {
   };
 
   const loopAudio = () => {
-    if (audioRef.current && isPlaying) {
+    if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play();
     }
@@ -57,11 +78,9 @@ export function AudioPlayer() {
 
   useEffect(() => {
     if (currentTrack) {
-      console.log("AudioPlayer.useEffect(currentTrack): setup audio and start playback")
       setupAudio();
       startPlayback();
     } else {
-      console.log("AudioPlayer.useEffect(currentTrack): cleanup audio and stop playback")
       cleanupAudio();
       stopPlayback();
     }
@@ -69,22 +88,6 @@ export function AudioPlayer() {
       cleanupAudio();
     };
   }, [currentTrack]);
-
-
-  useEffect(() => {
-    console.log("AudioPlayer.useEffect(isPlaying): isPlaying changed");
-    if (audioRef.current) {
-      console.log("AudioPlayer.useEffect(isPlaying): audioRef is current")
-      if (isPlaying) {
-        console.log("AudioPlayer.useEffect(isPlaying): play audio")
-        startPlayback();
-      } else {
-        console.log("AudioPlayer.useEffect(isPlaying): pause audio")
-        stopPlayback();
-      }
-    }
-    return () => clearInterval(progressInterval.current);
-  }, [isPlaying]);
 
   if (!currentTrack) return <AudioPlayerSkeleton />;
 
@@ -94,7 +97,7 @@ export function AudioPlayer() {
         className="pointer-events-none absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{
-          opacity: isPlaying ? 1 : 0,
+          opacity: !audioRef.current?.paused ? 1 : 0,
         }}
         transition={{
           duration: 0.3,
@@ -145,7 +148,7 @@ export function AudioPlayer() {
                   className="w-8 h-8 rounded-md"
                   onClick={togglePlayPause}
                 >
-                  {isPlaying ? (
+                  {!audioRef.current?.paused ? (
                     <Pause className="h-4 w-4" />
                   ) : (
                     <Play className="h-4 w-4" />
