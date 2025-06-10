@@ -1,18 +1,18 @@
 import { useMusic } from "@/contexts/CurrentDrawingContext";
-import { CardDescription } from "@/components/ui/card";
+import { Card,CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function AISummarySkeleton() {
   return (
-    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
+    <Card className="h-[84px] w-[448px] p-2">
       <div className="space-y-2">
         <Skeleton className="h-3.5 w-full" />
         <Skeleton className="h-3.5 w-[95%]" />
         <Skeleton className="h-3.5 w-[88%]" />
-        <Skeleton className="h-3.5 w-[82%]" />
+        {/* <Skeleton className="h-3.5 w-[82%]" /> */}
       </div>
-    </ScrollArea>
+    </Card>
   );
 }
 
@@ -26,8 +26,12 @@ export function AISummary() {
   }
 
   return (
-    <ScrollArea className="h-[84px] w-[448px] rounded-xl border shadow-sm p-2 scrollbar-hide bg-card">
+    <ScrollArea className="h-[84px] w-[448px] rounded-xl border p-2 scrollbar-hide bg-card">
       <CardDescription>{currentDrawing?.ai_message}</CardDescription>
+
+      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-b from-card via-card/90 to-transparent pointer-events-none z-10" />
+      
+      <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-card via-card/90 to-transparent pointer-events-none z-10" />
     </ScrollArea>
   );
 }

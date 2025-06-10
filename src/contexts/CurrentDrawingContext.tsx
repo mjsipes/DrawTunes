@@ -4,28 +4,16 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import type { Tables } from "@/lib/supabase/database.types";
+import { useRecommendations } from "@/hooks/use-recommendations"
+import { useCurrentDrawing } from "@/hooks/use-current-drawing"
+import { useInitialDrawings } from "@/hooks/use-initial-drawings"
 
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
-interface AudioState {
-  currentSongIndex: number | null;
-  isPlaying: boolean;
-  progress: number;
-  audioRef: React.RefObject<HTMLAudioElement | null>;
-  progressIntervalRef: React.RefObject<NodeJS.Timeout | undefined>;
-    playAudio: (songIndex: number) => void;
-  togglePlayPause: () => void;
-  skipToNext: () => void;
-  setProgress: (progress: number) => void;
-}
+const DRAWINGS_PER_PAGE = 15;
 
 interface iTunesTrack {
   trackId: number;
@@ -39,7 +27,7 @@ interface iTunesTrack {
   trackViewUrl?: string;
 }
 
-interface RecommendationWithSong {
+export interface RecommendationWithSong {
   id: string;
   drawing_id: string | null;
   song: {
@@ -50,228 +38,104 @@ interface RecommendationWithSong {
 }
 
 interface MusicContextType {
-  // Current drawing state
-  currentDrawing: Tables<"drawings"> | null;
-  clearCurrentDrawing: () => void;
-  
-  // Recommendations
   recommendations: RecommendationWithSong[];
-  
-  // Drawings list
+  currentDrawing: Tables<"drawings"> | null;
   allDrawings: Tables<"drawings">[];
   loadingDrawings: boolean;
   hasMoreDrawings: boolean;
+  currentTrack: iTunesTrack | null;
+  currentSongIndex: number | null;
+  isPlaying: boolean;
+  backgroundImage: string | null;
+  clearCurrentDrawing: () => void;
   loadMoreDrawings: () => Promise<void>;
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
-  
-  // Audio controls
-  audioState: AudioState;
-
-  
-  // Canvas & background
-  backgroundImage: string | null;
+  play_from_recomendations: (songIndex: number) => void;
+  play: () => void;
+  pause: () => void;
+  togglePlayPause: () => void;
+  skipToNext: () => void;
   clearBackgroundImage: () => void;
   clearCanvas: () => void;
   registerCanvasClear: (clearFn: () => void) => void;
 }
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const DRAWINGS_PER_PAGE = 15;
-
-// ============================================================================
-// CONTEXT SETUP
-// ============================================================================
-
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
-// ============================================================================
-// MAIN PROVIDER COMPONENT
-// ============================================================================
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const user = useAuth();
   const supabase = createClient();
 
-  // ========================================
-  // STATE DECLARATIONS
-  // ========================================
 
-  // Drawing state
   const [currentDrawing, setCurrentDrawing] = useState<Tables<"drawings"> | null>(null);
   const [allDrawings, setAllDrawings] = useState<Tables<"drawings">[]>([]);
   const [loadingDrawings, setLoadingDrawings] = useState(false);
   const [hasMoreDrawings, setHasMoreDrawings] = useState(true);
   const [drawingsPage, setDrawingsPage] = useState(0);
-
-  // Recommendations state
   const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
-
-  // Audio state
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-
-  // Canvas & background state
+  const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
 
-  // Refs
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // ========================================
   // AUDIO UTILITY FUNCTIONS
   // ========================================
+  useEffect(() => {
+    console.log("ContextProvider.useEffect(currentSongIndex): set current track to current song index")
+    const newTrack =
+      currentSongIndex === null || !recommendations[currentSongIndex] ?
+        null : recommendations[currentSongIndex].song.full_track_data;
 
-  const startProgressTracking = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
+    setCurrentTrack(newTrack);
+    setIsPlaying(true);
+  }, [currentSongIndex]);
 
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const value = (audioRef.current.currentTime / audioRef.current.duration) * 100;
-        setProgress(isNaN(value) ? 0 : value);
-      }
-    }, 500);
+  useEffect(() => {
+    console.log("ContextProvider.useEffect( recommendations): set current song index to 0");
+    setCurrentSongIndex(0);
+    const newTrack =
+      currentSongIndex === null || !recommendations[currentSongIndex] ?
+        null : recommendations[currentSongIndex].song.full_track_data;
+
+    setCurrentTrack(newTrack);
+    setIsPlaying(true);
+  }, [recommendations])
+
+  const play_from_recomendations = (index: number) => {
+    console.log("ContextProvider.play_from_recomendations: setCurrentSongIndex to ", index)
+    setCurrentSongIndex(index);
+    // console.log("ContextProvider.play_from_recomendations: play() ")
+    // play();
+  }
+  const play = () => {
+    console.log("ContextProvider.play:");
+    setIsPlaying(true);
   };
-
-  const clearAudioState = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = undefined;
-    }
-    setCurrentSongIndex(null);
+  const pause = useCallback(() => {
+    console.log("ContextProvider.pause:");
     setIsPlaying(false);
-    setProgress(0);
-  };
-
-  // ========================================
-  // MAIN FUNCTIONS
-  // ========================================
-
-  const playAudio = async (songIndex: number) => {
-    const song = recommendations[songIndex]?.song?.full_track_data;
-    if (!song?.previewUrl) return;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-
-    audioRef.current = new Audio(song.previewUrl);
-    setCurrentSongIndex(songIndex);
-    setProgress(0);
-
-    audioRef.current.addEventListener("ended", skipToNext);
-    audioRef.current.addEventListener("error", skipToNext);
-
-    try {
-      await audioRef.current.play();
-      setIsPlaying(true);
-      startProgressTracking();
-    } catch (err) {
-      console.error("Playback failed:", err);
-      skipToNext();
-    }
-  };
-
+  }, []);
   const togglePlayPause = () => {
-    if (!audioRef.current) {
-      if (currentSongIndex !== null) {
-        playAudio(currentSongIndex);
-      } else if (recommendations.length > 0) {
-        playAudio(0);
-      }
-      return;
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    } else {
-      audioRef.current.play();
-      startProgressTracking();
-    }
+    console.log("ContextProvider.togglePlayPause:");
     setIsPlaying(!isPlaying);
   };
-
-  const skipToNext = () => {
-    const nextIndex = currentSongIndex !== null ? currentSongIndex + 1 : 0;
-    if (nextIndex >= recommendations.length) {
-      playAudio(0);
-    } else {
-      playAudio(nextIndex);
-    }
-  };
+  const skipToNext = useCallback(() => {
+    console.log("ContextProvider.skipToNext:");
+    setCurrentSongIndex(prev =>
+      prev !== null ? (prev + 1) % recommendations.length : 0
+    );
+  }, [recommendations.length]);
 
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
     setCurrentDrawing(null);
     setRecommendations([]);
-    clearAudioState();
   };
 
-  const loadMoreDrawings = useCallback(async () => {
-    if (!user?.id || loadingDrawings || !hasMoreDrawings) return;
-
-    setLoadingDrawings(true);
-
-    try {
-      const { data, error } = await supabase
-        .from("drawings")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .range(
-          drawingsPage * DRAWINGS_PER_PAGE,
-          (drawingsPage + 1) * DRAWINGS_PER_PAGE - 1
-        );
-
-      if (error) {
-        console.error("Error fetching drawings:", error);
-        return;
-      }
-
-      if (data) {
-        if (data.length < DRAWINGS_PER_PAGE) {
-          setHasMoreDrawings(false);
-        }
-
-        setAllDrawings((prev) => drawingsPage === 0 ? data : [...prev, ...data]);
-        setDrawingsPage((prev) => prev + 1);
-      }
-    } catch (err) {
-      console.error("Error loading drawings:", err);
-    } finally {
-      setLoadingDrawings(false);
-    }
-  }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
-
-  const setCurrentDrawingById = useCallback(
-    async (drawingId: string) => {
-      const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
-      if (!drawing) return;
-
-      clearAudioState();
-      setRecommendations([]);
-      setBackgroundImage(drawing.drawing_url);
-      clearCanvas();
-      setCurrentDrawing(drawing);
-    },
-    [allDrawings]
-  );
-
-  // Canvas functions
   const registerCanvasClear = useCallback((clearFn: () => void) => {
     setCanvasClearFn(() => clearFn);
   }, []);
@@ -286,209 +150,80 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setBackgroundImage(null);
   };
 
-  // ========================================
-  // EFFECTS
-  // ========================================
-
-  // Load initial drawings when user changes
-  useEffect(() => {
-    if (user?.id) {
-      setAllDrawings([]);
-      setDrawingsPage(0);
-      setHasMoreDrawings(true);
-      loadMoreDrawings();
-    }
-  }, [user?.id]);
-
-  // Fetch current drawing and set up real-time subscription
-  useEffect(() => {
-    async function fetchCurrentDrawing() {
-      if (!user?.id) return;
-
+  const loadMoreDrawings = useCallback(async () => {
+    if (!user?.id || loadingDrawings || !hasMoreDrawings) return;
+    setLoadingDrawings(true);
+    try {
       const { data, error } = await supabase
         .from("drawings")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(1);
-
+        .range(
+          drawingsPage * DRAWINGS_PER_PAGE,
+          (drawingsPage + 1) * DRAWINGS_PER_PAGE - 1
+        );
       if (error) {
-        console.error("Error fetching most recent drawing:", error);
+        console.error("Error fetching drawings:", error);
         return;
       }
-
-      console.log("currentDrawing: ", data);
-      setCurrentDrawing(data && data.length > 0 ? data[0] : null);
-    }
-
-    fetchCurrentDrawing();
-
-    if (user?.id) {
-      const channel = supabase
-        .channel("drawings-latest-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "drawings",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log("drawing subscription triggered: ", payload);
-            if (payload.new) {
-              const newDrawing = payload.new as Tables<"drawings">;
-              setCurrentDrawing(newDrawing);
-              setAllDrawings((prev) => [newDrawing, ...prev]);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [user?.id]);
-
-  // Fetch recommendations when drawing changes
-  useEffect(() => {
-    async function fetchRecommendations() {
-      if (!currentDrawing?.drawing_id) return;
-
-      console.log("Querying recommendations for drawing ID:", currentDrawing.drawing_id);
-
-      const { data, error } = await supabase
-        .from("recommendations")
-        .select(`
-          id,
-          drawing_id,
-          songs!inner (
-            id, 
-            full_track_data,
-            last_updated
-          )
-        `)
-        .eq("drawing_id", currentDrawing.drawing_id);
-
-      if (error) {
-        console.error("Error fetching recommendations:", error);
-        return;
-      }
-
-      console.log("fetched recommendations: ", data);
-
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        console.log("No recommendations data found");
-        setRecommendations([]);
-        return;
-      }
-
-      console.log("Recommendations data:", data);
-
-      const normalizedData = data
-        .map((item) => {
-          if (!item.songs) {
-            console.warn("Item missing songs data:", item);
-            return null;
-          }
-
-          return {
-            id: item.id,
-            drawing_id: item.drawing_id,
-            song: Array.isArray(item.songs) ? item.songs[0] : item.songs,
-          };
-        })
-        .filter(Boolean) as RecommendationWithSong[];
-
-      setRecommendations(normalizedData);
-    }
-
-    fetchRecommendations();
-
-    if (currentDrawing?.drawing_id) {
-      console.log("Current drawing:", currentDrawing);
-
-      const channel = supabase
-        .channel("recommendations-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "recommendations",
-            filter: `drawing_id=eq.${currentDrawing.drawing_id}`,
-          },
-          (payload) => {
-            if (payload.new) {
-              console.log("recommendation subscription triggered: ", payload);
-              if (debounceTimer.current) {
-                clearTimeout(debounceTimer.current);
-              }
-              debounceTimer.current = setTimeout(() => {
-                fetchRecommendations();
-              }, 500);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-        if (debounceTimer.current) {
-          clearTimeout(debounceTimer.current);
+      if (data) {
+        if (data.length < DRAWINGS_PER_PAGE) {
+          setHasMoreDrawings(false);
         }
-      };
+        setAllDrawings((prev) => drawingsPage === 0 ? data : [...prev, ...data]);
+        setDrawingsPage((prev) => prev + 1);
+      }
+    } catch (err) {
+      console.error("Error loading drawings:", err);
+    } finally {
+      setLoadingDrawings(false);
     }
-  }, [currentDrawing?.id]);
+  }, [user?.id, loadingDrawings, hasMoreDrawings, drawingsPage, supabase]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, []);
+  const setCurrentDrawingById = useCallback(
+    async (drawingId: string) => {
+      console.log("ContextProvider.setCurrentDrawingById: finding drawing by ID");
+      const drawing = allDrawings.find((d) => d.drawing_id === drawingId);
+      if (!drawing) return;
+
+      // clearAudioState();
+      console.log("ContextProvider.setCurrentDrawingById: clearing recomendations");
+      setRecommendations([]);
+      console.log("ContextProvider.setCurrentDrawingById: clear canvas and set background image");
+      setBackgroundImage(drawing.drawing_url);
+      clearCanvas();
+      console.log("ContextProvider.setCurrentDrawingById: setCurrentDrawing");
+      setCurrentDrawing(drawing);
+    },
+    [allDrawings]
+  );
 
   // ========================================
-  // CONTEXT VALUE
+  // EFFECTS
   // ========================================
+  useInitialDrawings(user, setAllDrawings, setDrawingsPage, setHasMoreDrawings, loadMoreDrawings);
+  useCurrentDrawing(user, setCurrentDrawing, setAllDrawings);
+  useRecommendations(currentDrawing, setRecommendations);
 
-  const audioState: AudioState = {
-    currentSongIndex,
-    isPlaying,
-    progress,
-    audioRef,
-    progressIntervalRef,
-      playAudio,
-  togglePlayPause,
-  skipToNext,
-  setProgress,
-  };
 
   const contextValue: MusicContextType = {
-    // Current drawing
     currentDrawing,
     clearCurrentDrawing,
-    
-    // Recommendations
     recommendations,
-    
-    // Drawings list
     allDrawings,
     loadingDrawings,
     hasMoreDrawings,
     loadMoreDrawings,
     setCurrentDrawingById,
-    
-    // Audio controls
-    audioState,
-    
-    // Canvas & background
+    play,
+    play_from_recomendations,
+    skipToNext,
+    currentTrack,
+    currentSongIndex,
+    isPlaying,
+    togglePlayPause,
+    pause,
     backgroundImage,
     clearCanvas,
     registerCanvasClear,
