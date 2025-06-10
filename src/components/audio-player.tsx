@@ -1,16 +1,15 @@
 import { Music, SkipForward, Pause, Play } from "lucide-react";
+import { useState, useRef, useEffect,useCallback } from "react"
+import { motion } from 'motion/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMusic } from "@/contexts/CurrentDrawingContext";
-import { useState, useRef, useEffect } from "react"
 import { GlowEffect } from '@/components/glow-effect';
-import { motion } from 'motion/react';
-import { useCallback } from "react";
+import { useAudioPlayerData } from '@/stores/music-store';
 
 export function AudioPlayer() {
-  const { currentTrack , skipToNext} = useMusic();
+  const { currentTrack, skipToNext } = useAudioPlayerData();
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);

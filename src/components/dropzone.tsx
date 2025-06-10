@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { type UseSupabaseUploadReturn } from "@/hooks/use-supabase-upload";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, File, Loader2, Upload, X } from "lucide-react";
-import { useMusic } from "@/contexts/CurrentDrawingContext";
+import { useMusicActions } from "@/stores/music-store";
 import {
   createContext,
   type PropsWithChildren,
@@ -88,7 +88,7 @@ const DropzoneContent = ({ className }: { className?: string }) => {
     maxFiles,
     isSuccess,
   } = useDropzoneContext();
-  const { clearCurrentDrawing } = useMusic();
+  const { clearCurrentDrawing } = useMusicActions();
 
   const exceedMaxFiles = files.length > maxFiles;
 

@@ -2,19 +2,19 @@ import { AuthProvider } from "@/lib/supabase/AuthProvider";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { MusicProvider } from "@/contexts/CurrentDrawingContext";
 import { AudioPlayer } from "@/components/audio-player";
 import { RecommendationsTable } from "@/components/recommendations-table";
 import { AISummary } from "@/components/ai-summary";
 import DrawCard from "@/components/drawcard";
 import UploadCard from "@/components/uploadcard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MusicDataProvider } from "@/components/MusicDataProvider";
 
 function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="synesthesia-ui-theme">
       <AuthProvider>
-        <MusicProvider>
+        <MusicDataProvider>
           <SidebarProvider>
             <AppSidebar />
             <SidebarTrigger />
@@ -49,7 +49,7 @@ function App() {
               </div>
             </div>
           </SidebarProvider>
-        </MusicProvider>
+          </MusicDataProvider>
       </AuthProvider>
     </ThemeProvider>
   );

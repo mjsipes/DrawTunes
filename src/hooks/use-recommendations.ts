@@ -1,6 +1,9 @@
+
+// use-recommendations.ts
 import { useEffect, useRef } from 'react';
 import { createClient } from "@/lib/supabase/client";
-import type {RecommendationWithSong} from "@/contexts/CurrentDrawingContext"
+import { useMusicStore } from "@/stores/music-store";
+import type { RecommendationWithSong } from "@/stores/music-store";
 
 const supabase = createClient();
 
@@ -54,11 +57,10 @@ export async function fetchRecommendations(
   setRecommendations(normalizedData);
 }
 
-export function useRecommendations(
-  currentDrawing: { drawing_id: string | null } | null,
-  setRecommendations: (recs: RecommendationWithSong[]) => void
-) {
+export function useRecommendations() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const currentDrawing = useMusicStore(state => state.currentDrawing);
+  const setRecommendations = useMusicStore(state => state.setRecommendations);
 
   useEffect(() => {
     if (!currentDrawing?.drawing_id) return;
@@ -97,5 +99,5 @@ export function useRecommendations(
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [currentDrawing]);
+  }, [currentDrawing, setRecommendations]);
 }

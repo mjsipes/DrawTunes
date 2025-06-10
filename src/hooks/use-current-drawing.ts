@@ -1,5 +1,8 @@
+// use-current-drawing.ts
 import { useEffect } from 'react';
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/supabase/AuthProvider";
+import { useMusicStore } from "@/stores/music-store";
 import type { Tables } from "@/lib/supabase/database.types";
 
 const supabase = createClient();
@@ -24,11 +27,11 @@ export async function fetchCurrentDrawing(
   setCurrentDrawing(data && data.length > 0 ? data[0] : null);
 }
 
-export function useCurrentDrawing(
-  user: { id: string } | null,
-  setCurrentDrawing: (drawing: Tables<"drawings"> | null) => void,
-  setAllDrawings: (updater: (prev: Tables<"drawings">[]) => Tables<"drawings">[]) => void
-) {
+export function useCurrentDrawing() {
+  const user = useAuth();
+  const setCurrentDrawing = useMusicStore(state => state.setCurrentDrawing);
+  const setAllDrawings = useMusicStore(state => state.setAllDrawings);
+
   useEffect(() => {
     if (!user?.id) return;
 
@@ -58,5 +61,5 @@ export function useCurrentDrawing(
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, setCurrentDrawing, setAllDrawings]);
 }

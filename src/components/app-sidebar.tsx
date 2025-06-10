@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMusic } from "@/contexts/CurrentDrawingContext";
+import { useDrawingsData, useCurrentDrawing } from "@/stores/music-store";
+import { useAuth } from "@/lib/supabase/AuthProvider";
 import { getRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -79,21 +80,22 @@ function DrawingsSkeleton({ count = 5 }: { count?: number }) {
 }
 
 export function AppSidebar() {
-  const {
-    allDrawings,
-    currentDrawing,
-    loadingDrawings,
-    hasMoreDrawings,
-    loadMoreDrawings,
-    setCurrentDrawingById,
-  } = useMusic();
+  const user = useAuth();
+  const currentDrawing = useCurrentDrawing();
+  const { 
+    allDrawings, 
+    loadingDrawings, 
+    hasMoreDrawings, 
+    loadMoreDrawings, 
+    setCurrentDrawingById 
+  } = useDrawingsData();
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Infinite scroll handler
   useEffect(() => {
     const scrollElement = scrollRef.current;
-    if (!scrollElement) return;
+    if (!scrollElement || !user?.id) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollElement;
@@ -104,13 +106,13 @@ export function AppSidebar() {
         hasMoreDrawings &&
         !loadingDrawings
       ) {
-        loadMoreDrawings();
+        loadMoreDrawings(user.id);
       }
     };
 
     scrollElement.addEventListener("scroll", handleScroll);
     return () => scrollElement.removeEventListener("scroll", handleScroll);
-  }, [hasMoreDrawings, loadingDrawings, loadMoreDrawings]);
+  }, [hasMoreDrawings, loadingDrawings, loadMoreDrawings, user?.id]);
 
   return (
     <Sidebar>
