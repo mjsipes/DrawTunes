@@ -45,16 +45,12 @@ interface MusicContextType {
   hasMoreDrawings: boolean;
   currentTrack: iTunesTrack | null;
   currentSongIndex: number | null;
-  isPlaying: boolean;
   backgroundImage: string | null;
+  skipToNext: () => void;
   clearCurrentDrawing: () => void;
   loadMoreDrawings: () => Promise<void>;
   setCurrentDrawingById: (drawingId: string) => Promise<void>;
   play_from_recomendations: (songIndex: number) => void;
-  play: () => void;
-  pause: () => void;
-  togglePlayPause: () => void;
-  skipToNext: () => void;
   clearBackgroundImage: () => void;
   clearCanvas: () => void;
   registerCanvasClear: (clearFn: () => void) => void;
@@ -75,7 +71,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [drawingsPage, setDrawingsPage] = useState(0);
   const [recommendations, setRecommendations] = useState<RecommendationWithSong[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<iTunesTrack | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [canvasClearFn, setCanvasClearFn] = useState<(() => void) | null>(null);
@@ -91,44 +86,31 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         null : recommendations[currentSongIndex].song.full_track_data;
 
     setCurrentTrack(newTrack);
-    setIsPlaying(true);
   }, [currentSongIndex]);
 
   useEffect(() => {
-    console.log("ContextProvider.useEffect( recommendations): set current song index to 0");
+    console.log("ContextProvider.useEffect(recommendations): set current song index to 0");
     setCurrentSongIndex(0);
     const newTrack =
       currentSongIndex === null || !recommendations[currentSongIndex] ?
         null : recommendations[currentSongIndex].song.full_track_data;
-
     setCurrentTrack(newTrack);
-    setIsPlaying(true);
+
   }, [recommendations])
 
   const play_from_recomendations = (index: number) => {
     console.log("ContextProvider.play_from_recomendations: setCurrentSongIndex to ", index)
     setCurrentSongIndex(index);
-    // console.log("ContextProvider.play_from_recomendations: play() ")
-    // play();
   }
-  const play = () => {
-    console.log("ContextProvider.play:");
-    setIsPlaying(true);
-  };
-  const pause = useCallback(() => {
-    console.log("ContextProvider.pause:");
-    setIsPlaying(false);
-  }, []);
-  const togglePlayPause = () => {
-    console.log("ContextProvider.togglePlayPause:");
-    setIsPlaying(!isPlaying);
-  };
-  const skipToNext = useCallback(() => {
+
+        const skipToNext = useCallback(() => {
     console.log("ContextProvider.skipToNext:");
     setCurrentSongIndex(prev =>
       prev !== null ? (prev + 1) % recommendations.length : 0
     );
   }, [recommendations.length]);
+
+
 
   const clearCurrentDrawing = () => {
     console.log("currentDrawing cleared");
@@ -216,18 +198,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     hasMoreDrawings,
     loadMoreDrawings,
     setCurrentDrawingById,
-    play,
     play_from_recomendations,
-    skipToNext,
     currentTrack,
     currentSongIndex,
-    isPlaying,
-    togglePlayPause,
-    pause,
     backgroundImage,
     clearCanvas,
     registerCanvasClear,
     clearBackgroundImage,
+    skipToNext,
   };
 
   return (

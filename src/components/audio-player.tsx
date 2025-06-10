@@ -7,12 +7,29 @@ import { useMusic } from "@/contexts/CurrentDrawingContext";
 import { useState, useRef, useEffect } from "react"
 import { GlowEffect } from '@/components/glow-effect';
 import { motion } from 'motion/react';
+import { useCallback } from "react";
 
 export function AudioPlayer() {
-  const { currentTrack, togglePlayPause, skipToNext, isPlaying } = useMusic();
+  const { currentTrack , skipToNext} = useMusic();
   const [progress, setProgress] = useState(50);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+
+    const play = () => {
+      console.log("ContextProvider.play:");
+      setIsPlaying(true);
+    };
+    const pause = useCallback(() => {
+      console.log("ContextProvider.pause:");
+      setIsPlaying(false);
+    }, []);
+    const togglePlayPause = () => {
+      console.log("ContextProvider.togglePlayPause:");
+      setIsPlaying(!isPlaying);
+    };
+
 
   const updateProgress = () => {
     if (audioRef.current) {
