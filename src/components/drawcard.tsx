@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
-import { useMusic } from "@/contexts/CurrentDrawingContext";
+
+import { useMusicActions, useBackgroundImage } from "@/stores/music-store";
 
 export default function DrawCard() {
   const supabase = createClient();
@@ -23,9 +24,8 @@ export default function DrawCard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canvasColor, setCanvasColor] = useState("#FFFFFF");
-  const { clearCurrentDrawing } = useMusic();
-  const { backgroundImage, clearBackgroundImage } = useMusic();
-  const { registerCanvasClear } = useMusic();
+  const { clearCurrentDrawing, clearBackgroundImage, registerCanvasClear } = useMusicActions();
+  const backgroundImage = useBackgroundImage();
 
   // console.log("DrawCard render - backgroundImage:", backgroundImage);
 
