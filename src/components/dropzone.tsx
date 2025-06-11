@@ -63,7 +63,7 @@ const Dropzone = ({
           className: cn(
             "border-2 border-gray-300 rounded-lg p-6 text-center bg-card transition-colors duration-300 text-foreground",
             className,
-            isSuccess ? "border-solid" : "border-dashed",
+            isSuccess ? "border-solid" : "border-solid",
             isActive && "border-primary bg-primary/10",
             isInvalid && "border-destructive bg-destructive/10"
           ),

@@ -15,7 +15,6 @@ import { createClient } from "@/lib/supabase/client";
 import { useTheme } from "@/components/theme-provider";
 
 import { useMusicStore } from "@/stores/music-store";
-
 export default function DrawCard() {
   const supabase = createClient();
   const { theme } = useTheme();
@@ -30,8 +29,6 @@ export default function DrawCard() {
   const registerCanvasClear = useMusicStore(state => state.registerCanvasClear);
   const backgroundImage = useMusicStore(state => state.backgroundImage)
 
-  // console.log("DrawCard render - backgroundImage:", backgroundImage);
-
   useEffect(() => {
     registerCanvasClear(() => {
       if (canvasRef.current) {
@@ -40,7 +37,6 @@ export default function DrawCard() {
     });
   }, [registerCanvasClear]);
 
-  // Update canvas color when theme changes
   useEffect(() => {
     const isDark =
       theme === "dark" ||
@@ -61,68 +57,9 @@ export default function DrawCard() {
     setError(null);
 
     try {
-      // Create a new canvas to composite the background and drawing
-      const compositeCanvas = document.createElement("canvas");
-      const ctx = compositeCanvas.getContext("2d");
-
-      if (!ctx) throw new Error("Could not get canvas context");
-
-      // Set canvas dimensions (match your ReactSketchCanvas dimensions)
-      compositeCanvas.width = 400; // Adjust to match your canvas width
-      compositeCanvas.height = 256; // Adjust to match your canvas height (h-64 = 256px)
-
-      // Fill with canvas background color
-      ctx.fillStyle = canvasColor;
-      ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height);
-
-      // Draw background image if it exists
-      if (backgroundImage) {
-        const bgImg = new Image();
-        bgImg.crossOrigin = "anonymous";
-
-        await new Promise((resolve, reject) => {
-          bgImg.onload = () => {
-            ctx.drawImage(
-              bgImg,
-              0,
-              0,
-              compositeCanvas.width,
-              compositeCanvas.height
-            );
-            resolve(undefined);
-          };
-          bgImg.onerror = reject;
-          bgImg.src = backgroundImage;
-        });
-      }
-
-      // Export the drawing from ReactSketchCanvas (transparent background)
-      const drawingDataUrl = await canvasRef.current.exportImage("png");
-      const drawingImg = new Image();
-
-      await new Promise((resolve, reject) => {
-        drawingImg.onload = () => {
-          // Draw the sketch on top of the background
-          ctx.drawImage(
-            drawingImg,
-            0,
-            0,
-            compositeCanvas.width,
-            compositeCanvas.height
-          );
-          resolve(undefined);
-        };
-        drawingImg.onerror = reject;
-        drawingImg.src = drawingDataUrl;
-      });
-
-      // Convert composite canvas to blob
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        compositeCanvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error("Failed to create blob"));
-        }, "image/png");
-      });
+      const dataUrl = await canvasRef.current.exportImage("png");
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
 
       // Generate a unique filename
       const fileName = `drawing-${Date.now()}.png`;
@@ -153,81 +90,78 @@ export default function DrawCard() {
   };
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Draw for Music</CardTitle>
-          <CardDescription>
-            Draw something and we'll recommend Spotify tracks that match your
-            art.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="h-64 border-2 border-gray-300 rounded-lg overflow-hidden">
-            <ReactSketchCanvas
-              ref={canvasRef}
-              strokeWidth={4}
-              strokeColor={strokeColor}
-              canvasColor={canvasColor}
-              backgroundImage={backgroundImage ?? undefined}
-              style={{
-                border: 'none',
-              }}
-            />
-          </div>
-          <div className="flex justify-between items-center w-full">
-            <div className="flex space-x-2 items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (canvasRef.current) {
-                    canvasRef.current.clearCanvas();
-                    //clear background image
-                    clearBackgroundImage();
-                  }
-                }}
-              >
-                <RotateCcw />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (canvasRef.current) {
-                    canvasRef.current.undo();
-                  }
-                }}
-              >
-                <Undo />
-              </Button>
-              <div className="relative h-8 w-8 rounded-2xl overflow-hidden border">
-                <input
-                  type="color"
-                  value={strokeColor}
-                  onChange={handleStrokeColorChange}
-                  className="absolute inset-0 cursor-pointer opacity-0"
-                />
-                <div
-                  className="h-full w-full"
-                  style={{ backgroundColor: strokeColor }}
-                />
-              </div>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Draw for Music</CardTitle>
+        <CardDescription>
+          Draw something and we'll recommend Spotify tracks that match your art.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="h-64 border-2 border-gray-300 rounded-lg overflow-hidden">
+          <ReactSketchCanvas
+            ref={canvasRef}
+            strokeWidth={4}
+            strokeColor={strokeColor}
+            canvasColor={canvasColor}
+            backgroundImage={backgroundImage ?? undefined}
+            exportWithBackgroundImage={true} // 🎉 This does the magic!
+            style={{
+              border: 'none',
+            }}
+          />
+        </div>
+        <div className="flex justify-between items-center w-full">
+          <div className="flex space-x-2 items-center">
             <Button
               variant="outline"
-              onClick={handleGetRecommendations}
-              disabled={isLoading}
+              size="sm"
+              onClick={() => {
+                if (canvasRef.current) {
+                  canvasRef.current.clearCanvas();
+                  clearBackgroundImage();
+                }
+              }}
             >
-              {isLoading ? "Uploading..." : "Get Music Recommendations"}
+              <RotateCcw />
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (canvasRef.current) {
+                  canvasRef.current.undo();
+                }
+              }}
+            >
+              <Undo />
+            </Button>
+            <div className="relative h-8 w-8 rounded-2xl overflow-hidden border">
+              <input
+                type="color"
+                value={strokeColor}
+                onChange={handleStrokeColorChange}
+                className="absolute inset-0 cursor-pointer opacity-0"
+              />
+              <div
+                className="h-full w-full"
+                style={{ backgroundColor: strokeColor }}
+              />
+            </div>
           </div>
+          <Button
+            variant="outline"
+            onClick={handleGetRecommendations}
+            disabled={isLoading}
+          >
+            {isLoading ? "Uploading..." : "Get Music Recommendations"}
+          </Button>
+        </div>
 
-          {error && (
-            <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
-          )}
-        </CardContent>
-      </Card>
-    </>
+        {error && (
+          <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
