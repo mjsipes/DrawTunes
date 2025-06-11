@@ -12,8 +12,6 @@ Eight months later, after gaining experience with Supabase databases and edge fu
 
 I'd recently watched a Y Combinator video emphasizing how crucial exceptional design will be for web applications moving forward. In my previous projects, I treated the interface as just something I had to complete to make the functionality work. This time, I wanted everything to be about the user experience and design.
 
-Design became the primary focus of this project. Every component, interaction, and visual element was carefully considered. I wanted to prove to myself that I could build something that wasn't just functional, but genuinely delightful to use.
-
 ## Design Philosophy
 
 Simple and responsive. Every interaction should feel intuitive and every component should serve a clear purpose in the user's creative journey.
