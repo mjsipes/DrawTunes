@@ -16,7 +16,7 @@ export function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [optimisticPlaying, setOptimisticPlaying] = useOptimistic(
     isPlaying,
-    (state, action: boolean) => action
+    ( action: boolean) => action
   );
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
