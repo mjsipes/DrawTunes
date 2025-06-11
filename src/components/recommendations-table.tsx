@@ -58,7 +58,7 @@ export function RecommendationsTable() {
   const skeletonRowsCount = Math.max(0, 5 - recommendations.length);
 
   return (
-    <Card className="py-0">
+    <Card className="py-0 overflow-hidden">
       <CardContent className="p-0">
         <Table className="border-collapse table-fixed w-full">
           <TableHeader>
