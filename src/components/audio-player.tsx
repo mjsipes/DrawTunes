@@ -1,5 +1,5 @@
 import { Music, SkipForward, Pause, Play } from "lucide-react";
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, useOptimistic } from "react"
 import { motion } from 'motion/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,23 +13,33 @@ export function AudioPlayer() {
   const currentTrack = useMusicStore(state => state.currentTrack);
   const skipToNext = useMusicStore(state => state.skipToNext);
   const [progress, setProgress] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [optimisticPlaying, setOptimisticPlaying] = useOptimistic(
+    isPlaying,
+    (state, action: boolean) => action
+  );
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
   
   const play = () => {
     if (audioRef.current) {
-      audioRef.current.play();
+      setOptimisticPlaying(true);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      });
     }
   };
 
   const pause = useCallback(() => {
     if (audioRef.current) {
+      setOptimisticPlaying(false);
       audioRef.current.pause();
+      setIsPlaying(false);
     }
-  }, []);
+  }, [setOptimisticPlaying]);
 
   const togglePlayPause = () => {
-    if (!audioRef.current?.paused) {
+    if (optimisticPlaying) {
       pause();
     } else {
       play();
@@ -51,14 +61,19 @@ export function AudioPlayer() {
 
   function startPlayback() {
     if (audioRef.current) {
-audioRef.current.play();
+      setOptimisticPlaying(true);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      });
       progressInterval.current = setInterval(updateProgress, 500);
     }
   }
 
   function stopPlayback() {
     if (audioRef.current) {
+      setOptimisticPlaying(false);
       audioRef.current.pause();
+      setIsPlaying(false);
       clearInterval(progressInterval.current);
     }
   }
@@ -67,20 +82,29 @@ audioRef.current.play();
     if (audioRef.current && currentTrack) {
       audioRef.current.src = currentTrack.previewUrl || '';
       audioRef.current.addEventListener('ended', loopAudio);
+      
+      // Sync optimistic state with actual audio events
+      audioRef.current.addEventListener('play', () => setOptimisticPlaying(true));
+      audioRef.current.addEventListener('pause', () => setOptimisticPlaying(false));
+      audioRef.current.addEventListener('ended', () => setOptimisticPlaying(false));
     }
   }
 
   function cleanupAudio() {
     if (audioRef.current) {
       audioRef.current.removeEventListener('ended', loopAudio);
+      audioRef.current.removeEventListener('play', () => setOptimisticPlaying(true));
+      audioRef.current.removeEventListener('pause', () => setOptimisticPlaying(false));
+      audioRef.current.removeEventListener('ended', () => setOptimisticPlaying(false));
       audioRef.current.src = '';
     }
+    setOptimisticPlaying(false);
   }
 
   useEffect(() => {
     if (currentTrack) {
       setupAudio();
-        startPlayback();
+      startPlayback();
     } else {
       cleanupAudio();
       stopPlayback();
@@ -98,7 +122,7 @@ audioRef.current.play();
         className="pointer-events-none absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{
-          opacity: audioRef.current?.src && !audioRef.current?.paused ? 1 : 0,
+          opacity: optimisticPlaying ? 1 : 0,
         }}
         transition={{
           duration: 0.3,
@@ -149,7 +173,7 @@ audioRef.current.play();
                   className="w-8 h-8 rounded-md"
                   onClick={togglePlayPause}
                 >
-                  {audioRef.current?.src && !audioRef.current?.paused ? (
+                  {optimisticPlaying ? (
                     <Pause className="h-4 w-4" />
                   ) : (
                     <Play className="h-4 w-4" />
