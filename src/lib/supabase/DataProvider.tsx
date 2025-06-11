@@ -1,13 +1,13 @@
-// components/MusicDataProvider.tsx
+// components/DataProvider.tsx
 import { useInitialDrawings } from "@/hooks/use-initial-drawings";
 import { useCurrentDrawing } from "@/hooks/use-current-drawing";
 import { useRecommendations } from "@/hooks/use-recommendations";
 
-interface MusicDataProviderProps {
+interface DataProviderProps {
   children: React.ReactNode;
 }
 
-export function MusicDataProvider({ children }: MusicDataProviderProps) {
+export function DataProvider({ children }: DataProviderProps) {
   // Initialize all the data loading hooks
   useInitialDrawings();
   useCurrentDrawing();
