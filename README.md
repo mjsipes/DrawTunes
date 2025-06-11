@@ -63,17 +63,24 @@ After optimizing what belonged in global vs. local state, I migrated from React 
 - Re-renders dropped dramatically as components only updated when their subscribed data changed
 - The overall developer experience improved significantly - code became much more readable
 
-**Performance Impact**:
-
-*Before optimization (All-in-One Context):*
-![Before Optimization](profiler1a.png)
-![Before Optimization Detail](profiler1b.png)
-
-*After optimization (Zustand + Strategic State Placement):*
-![After Optimization](profiler2a.png)
-![After Optimization Detail](profiler2b.png)
+<table>
+<tr>
+<td><em>Before optimization (All-in-One Context):</em></td>
+<td><em>After optimization (Zustand + Strategic State Placement):</em></td>
+</tr>
+<tr>
+<td><img src="public/profiler1a.png" alt="Before Optimization" width="400"></td>
+<td><img src="public/profiler2a.png" alt="After Optimization" width="400"></td>
+</tr>
+<tr>
+<td><img src="public/profiler1b.png" alt="Before Optimization Detail" width="400"></td>
+<td><img src="public/profiler2b.png" alt="After Optimization Detail" width="400"></td>
+</tr>
+</table>
 
 The React Profiler screenshots show the dramatic reduction in re-renders after moving to Zustand and properly separating global vs. local state. What was once causing app-wide re-renders every 500ms (from audio progress updates) became isolated, component-specific updates.
+
+Each block in these visualizations represents a component in the app's structure. When a block lights up in blue, it means that component is re-rendering (updating its display). The goal is to minimize unnecessary blue blocks—only the components that actually need to update should light up.
 
 ### AI-Powered Music Recommendation System
 
