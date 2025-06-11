@@ -6,7 +6,7 @@ DrawTunes is a web application where you can draw or upload images and receive p
 
 ## The Journey Behind the Tech
 
-In fall 2024, I attended HackSC at my university where my friend's roommate [Noah Pinale](https://www.linkedin.com/in/noahpinales/) ([GitHub](https://github.com/noahpin)) created an application called [SketchTune](https://sketchtune.vercel.app/). I thought it was fascinating and wondered about the technical implementation behind it.
+In fall 2024, I attended HackSC at my university where my friend's roommate [Noah Pinales](https://www.linkedin.com/in/noahpinales/) ([GitHub](https://github.com/noahpin)) created an application called [SketchTune](https://sketchtune.vercel.app/). I thought it was fascinating and wondered about the technical implementation behind it.
 
 Eight months later, after gaining experience with Supabase databases and edge functions through my F1 Racer project, I looked back at Noah's work and realized I could recreate and improve upon it myself.
 
