@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GlowEffect } from '@/components/glow-effect';
-import { useAudioPlayerData } from '@/stores/music-store';
+import { useMusicStore } from '@/stores/music-store';
 
 export function AudioPlayer() {
-  const { currentTrack, skipToNext } = useAudioPlayerData();
+
+    const currentTrack = useMusicStore(state => state.currentTrack);
+    const skipToNext = useMusicStore(state => state.skipToNext);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
