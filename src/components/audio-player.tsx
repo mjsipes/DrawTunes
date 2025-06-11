@@ -1,5 +1,5 @@
 import { Music, SkipForward, Pause, Play } from "lucide-react";
-import { useState, useRef, useEffect,useCallback } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { motion } from 'motion/react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,12 @@ import { useMusicStore } from '@/stores/music-store';
 
 export function AudioPlayer() {
 
-    const currentTrack = useMusicStore(state => state.currentTrack);
-    const skipToNext = useMusicStore(state => state.skipToNext);
+  const currentTrack = useMusicStore(state => state.currentTrack);
+  const skipToNext = useMusicStore(state => state.skipToNext);
   const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | undefined>(undefined);
-
+  
   const play = () => {
     if (audioRef.current) {
       audioRef.current.play();
@@ -51,7 +51,7 @@ export function AudioPlayer() {
 
   function startPlayback() {
     if (audioRef.current) {
-      audioRef.current.play();
+audioRef.current.play();
       progressInterval.current = setInterval(updateProgress, 500);
     }
   }
@@ -80,7 +80,7 @@ export function AudioPlayer() {
   useEffect(() => {
     if (currentTrack) {
       setupAudio();
-      startPlayback();
+        startPlayback();
     } else {
       cleanupAudio();
       stopPlayback();
@@ -98,7 +98,7 @@ export function AudioPlayer() {
         className="pointer-events-none absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{
-          opacity: !audioRef.current?.paused ? 1 : 0,
+          opacity: audioRef.current?.src && !audioRef.current?.paused ? 1 : 0,
         }}
         transition={{
           duration: 0.3,
@@ -149,7 +149,7 @@ export function AudioPlayer() {
                   className="w-8 h-8 rounded-md"
                   onClick={togglePlayPause}
                 >
-                  {!audioRef.current?.paused ? (
+                  {audioRef.current?.src && !audioRef.current?.paused ? (
                     <Pause className="h-4 w-4" />
                   ) : (
                     <Play className="h-4 w-4" />
