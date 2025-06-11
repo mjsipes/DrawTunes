@@ -163,13 +163,16 @@ export default function DrawCard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="h-64">
+          <div className="h-64 border-2 border-gray-300 rounded-lg overflow-hidden">
             <ReactSketchCanvas
               ref={canvasRef}
               strokeWidth={4}
               strokeColor={strokeColor}
               canvasColor={canvasColor}
               backgroundImage={backgroundImage ?? undefined}
+              style={{
+                border: 'none',
+              }}
             />
           </div>
           <div className="flex justify-between items-center w-full">
