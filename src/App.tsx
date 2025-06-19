@@ -9,15 +9,18 @@ import DrawCard from "@/components/drawcard";
 import UploadCard from "@/components/uploadcard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MusicDataProvider } from "@/components/MusicDataProvider";
+import { Analytics } from "@vercel/analytics/next"
 
 function App() {
   return (
+
     <ThemeProvider defaultTheme="system" storageKey="synesthesia-ui-theme">
       <AuthProvider>
         <MusicDataProvider>
           <SidebarProvider>
             <AppSidebar />
             <SidebarTrigger />
+            <Analytics />
             <div className="container mx-auto p-4">
               <div className="text-center mb-6">
                 <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
