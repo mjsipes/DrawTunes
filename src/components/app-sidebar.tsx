@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDrawingsData, useCurrentDrawing } from "@/stores/music-store";
+import { useMusicStore } from "@/stores/music-store";
 import { useAuth } from "@/lib/supabase/AuthProvider";
 import { getRelativeTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -81,14 +81,13 @@ function DrawingsSkeleton({ count = 5 }: { count?: number }) {
 
 export function AppSidebar() {
   const user = useAuth();
-  const currentDrawing = useCurrentDrawing();
-  const { 
-    allDrawings, 
-    loadingDrawings, 
-    hasMoreDrawings, 
-    loadMoreDrawings, 
-    setCurrentDrawingById 
-  } = useDrawingsData();
+  const currentDrawing = useMusicStore(state => state.currentDrawing);
+  const allDrawings = useMusicStore(state => state.allDrawings);
+  const loadingDrawings = useMusicStore(state => state.loadingDrawings);
+  const hasMoreDrawings = useMusicStore(state => state.hasMoreDrawings);
+  const loadMoreDrawings = useMusicStore(state => state.loadMoreDrawings);
+  const setCurrentDrawingById = useMusicStore(state => state.setCurrentDrawingById);
+  
 
   const scrollRef = useRef<HTMLDivElement>(null);
 

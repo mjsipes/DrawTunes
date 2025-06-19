@@ -3,7 +3,7 @@ import { FaApple } from "react-icons/fa";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRecommendations, useMusicActions, useAudioPlayerData } from '@/stores/music-store';
+import { useMusicStore } from '@/stores/music-store';
 
 import {
   Table,
@@ -51,14 +51,14 @@ const getArtworkUrl = (song: iTunesTrack, size = 100): string | null => {
 
 export function RecommendationsTable() {
 
-  const recommendations = useRecommendations();
-  const { playFromRecommendations } = useMusicActions();
-  const { currentTrack } = useAudioPlayerData();
+  const recommendations = useMusicStore(state => state.recommendations)
+  const playFromRecommendations = useMusicStore(state => state.playFromRecommendations);
+  const currentTrack = useMusicStore(state => state.currentTrack);
 
   const skeletonRowsCount = Math.max(0, 5 - recommendations.length);
 
   return (
-    <Card className="py-0">
+    <Card className="py-0 overflow-hidden">
       <CardContent className="p-0">
         <Table className="border-collapse table-fixed w-full">
           <TableHeader>
@@ -80,9 +80,8 @@ export function RecommendationsTable() {
                 return (
                   <TableRow
                     key={rec.id}
-                    className={`cursor-pointer hover:bg-muted ${
-                      isCurrentSong ? "bg-accent" : ""
-                    }`}
+                    className={`cursor-pointer hover:bg-muted ${isCurrentSong ? "bg-accent" : ""
+                      }`}
                     onClick={() => playFromRecommendations(index)}
                   >
                     <TableCell className="w-[30px] text-center text-sm">
