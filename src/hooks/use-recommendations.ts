@@ -88,7 +88,8 @@ export function useRecommendations() {
                 fetchRecommendations(currentDrawing.drawing_id, setRecommendations);
               }
             }, 500);
-          }
+      }
+      
         }
       )
       .subscribe();
