@@ -9,7 +9,7 @@ import DrawCard from "@/components/drawcard";
 import UploadCard from "@/components/uploadcard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataProvider } from "@/lib/supabase/DataProvider";
-// import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 
 function App() {
   return (
@@ -20,7 +20,7 @@ function App() {
           <SidebarProvider>
             <AppSidebar />
             <SidebarTrigger />
-            {/* <Analytics/> */}
+            <Analytics/>
             <div className="container mx-auto p-4">
               <div className="text-center mb-6">
                 <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
