@@ -65,7 +65,7 @@ export function RecommendationsTable() {
             <TableRow>
               <TableHead className="w-[30px] text-center">#</TableHead>
               <TableHead className="w-[180px]">Track</TableHead>
-              <TableHead className="w-[100px]">Artist</TableHead>
+              <TableHead className="w-[80px] sm:w-[100px]">Artist</TableHead>
               <TableHead className="w-[30px] text-right"></TableHead>
             </TableRow>
           </TableHeader>

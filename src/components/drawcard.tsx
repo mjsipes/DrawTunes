@@ -111,7 +111,7 @@ export default function DrawCard() {
             }}
           />
         </div>
-        <div className="flex justify-between items-center w-full">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center w-full gap-3">
           <div className="flex space-x-2 items-center">
             <Button
               variant="outline"
@@ -153,8 +153,12 @@ export default function DrawCard() {
             variant="outline"
             onClick={handleGetRecommendations}
             disabled={isLoading}
+            className="w-full sm:w-auto text-center"
           >
-            {isLoading ? "Uploading..." : "Get Music Recommendations"}
+
+            <span>
+              {isLoading ? "Uploading..." : "Get Music Recommendations"}
+            </span>
           </Button>
         </div>
 

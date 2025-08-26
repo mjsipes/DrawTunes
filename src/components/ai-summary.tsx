@@ -6,7 +6,7 @@ import { useMusicStore } from "@/stores/music-store";
 
 function AISummarySkeleton() {
   return (
-    <Card className="h-[84px] w-[448px] p-2">
+    <Card className="h-[84px]  p-2">
       <div className="space-y-2">
         <Skeleton className="h-3.5 w-full" />
         <Skeleton className="h-3.5 w-[95%]" />
@@ -24,8 +24,8 @@ export function AISummary() {
   }
 
   return (
-    <div className="relative">
-      <ScrollArea className="h-[84px] w-[448px] rounded-xl border scrollbar-hide bg-card overflow-hidden">
+    <div>
+      <ScrollArea className="h-[84px] rounded-xl border scrollbar-hide bg-card overflow-hidden">
         <div className="px-2 pt-1 pb-2">
           <CardDescription>{currentDrawing?.ai_message}</CardDescription>
         </div>
