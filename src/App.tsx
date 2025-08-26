@@ -21,16 +21,15 @@ function App() {
             <AppSidebar />
             <SidebarTrigger className="hidden sm:block"/>
             <Analytics/>
-            <div className="container mx-auto p-4">
+            <div className="container mx-auto p-4 justify-center items-center">
               <div className="text-center sm:mb-6">
-
                 <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
                   DrawTunes
                 </h1>
               </div>
-              <div className="flex flex-col md:flex-row justify-center gap-2 sm:gap-16 w-full">
-                <div className="max-w-md">
-                  <Tabs defaultValue="draw" className="w-[350px] sm:w-[500px]">
+              <div className="flex flex-col md:flex-row justify-center gap-2 md:gap-4 w-full">
+                <div className="flex justify-center">
+                  <Tabs defaultValue="draw" className="w-[350px] sm:w-[450px]">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="draw">Draw</TabsTrigger>
                       <TabsTrigger value="upload">Upload</TabsTrigger>
@@ -43,7 +42,7 @@ function App() {
                     </TabsContent>
                   </Tabs>
                 </div>
-                <div className="max-w-md">
+                <div className="flex justify-center">
                   <div className="w-[350px] sm:w-[450px] space-y-2">
                     <AudioPlayer />
                     <AISummary />
