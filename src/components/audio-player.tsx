@@ -142,7 +142,7 @@ export function AudioPlayer() {
         <CardContent>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 w-[280px]">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 {currentTrack.artworkUrl100 ? (
                   <img
                     src={currentTrack.artworkUrl100.replace(
@@ -204,7 +204,7 @@ function AudioPlayerSkeleton() {
       <CardContent>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 w-[280px]">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="w-10 h-10 bg-slate-200 rounded-md flex items-center justify-center flex-shrink-0">
                 <Music size={20} className="text-slate-400" />
               </div>
