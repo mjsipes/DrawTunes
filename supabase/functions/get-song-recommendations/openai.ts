@@ -1,51 +1,43 @@
 import OpenAI from "jsr:@openai/openai";
-import { z } from "npm:zod";
-import { zodTextFormat } from "npm:openai/helpers/zod";
 
-const SongSchema = z.object({
-  title: z.string(),
-  artist: z.string(),
-});
-
-const PlaylistResponseSchema = z.object({
-  songs: z.array(SongSchema),
-  message: z.string(),
-});
 
 export async function get_song_recommendations_openai(imageUrl: string) {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
   const openai = new OpenAI({
-    apiKey: apiKey,
+    apiKey: Deno.env.get("OPENAI_API_KEY"),
   });
 
-  const response = await openai.responses.parse({
-    model: "gpt-4o",
+  const response = await openai.responses.create({
+    model: "gpt-5-nano",  // Your preferred GPT-5 variant
     input: [
-      {
-        role: "system",
-        content: prompt,
-      },
+      { role: "system", content: prompt },
       {
         role: "user",
         content: [
-          {
-            type: "input_image",
-            image_url: imageUrl,
-            detail: "high",
-          },
+          { type: "input_image", image_url: imageUrl, detail: "high" },
         ],
       },
     ],
     text: {
-      format: zodTextFormat(PlaylistResponseSchema, "playlist_repsponse"),
+      format: { type: "text" },  // Raw text output
+      // verbosity: "medium"  // NOTE: may cause error on some GPT-5 models :contentReference[oaicite:4]{index=4}
+    },
+    reasoning: {
+      effort: "minimal",
+      summary: "auto",
     },
   });
 
-  console.log(response.output_text);
-  const parsedOutput = JSON.parse(response.output_text);
-  const message = parsedOutput.message;
-  const songs = parsedOutput.songs;
-  return { message, songs };
+  console.log("Output text:", response.output_text);
+
+  let data;
+  try {
+    data = JSON.parse(response.output_text);
+  } catch (err) {
+    throw new Error("Failed to parse JSON: " + err.message + "\nResponse was:\n" + response.output_text);
+  }
+
+  const { songs, message } = data;
+  return { songs, message };
 }
 
 const num_songs = 5;
