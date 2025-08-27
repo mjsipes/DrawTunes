@@ -19,7 +19,7 @@ function App() {
         <DataProvider>
           <SidebarProvider>
             <AppSidebar />
-            <SidebarTrigger className="hidden sm:block"/>
+            <SidebarTrigger className="hidden sm:block p-1"/>
             <Analytics/>
             <div className="container mx-auto p-4 justify-center items-center">
               <div className="text-center sm:mb-6">
