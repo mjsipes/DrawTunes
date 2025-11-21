@@ -69,12 +69,12 @@ After optimizing what belonged in global vs. local state, I migrated from React 
 <td><em>After optimization (Zustand + Strategic State Placement):</em></td>
 </tr>
 <tr>
-<td><img src="public/profiler1a.png" alt="Before Optimization" width="400"></td>
-<td><img src="public/profiler2a.png" alt="After Optimization" width="400"></td>
+<td><img src="https://raw.githubusercontent.com/mjsipes/drawtunes/main/public/profiler1a.png" alt="Before Optimization" width="400"></td>
+<td><img src="https://raw.githubusercontent.com/mjsipes/drawtunes/main/public/profiler2a.png" alt="After Optimization" width="400"></td>
 </tr>
 <tr>
-<td><img src="public/profiler1b.png" alt="Before Optimization Detail" width="400"></td>
-<td><img src="public/profiler2b.png" alt="After Optimization Detail" width="400"></td>
+<td><img src="https://raw.githubusercontent.com/mjsipes/drawtunes/main/public/profiler1b.png" alt="Before Optimization Detail" width="400"></td>
+<td><img src="https://raw.githubusercontent.com/mjsipes/drawtunes/main/public/profiler2b.png" alt="After Optimization Detail" width="400"></td>
 </tr>
 </table>
 
